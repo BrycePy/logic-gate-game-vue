@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>Vite App</title>
+    <script type="module" crossorigin src="/assets/index-tP3XkZ_3.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BXhZ8OZX.css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <div class="animated-bg-spin">
+      <img alt="Background" class="animated-bg" src="/background.png" />
+    </div>
+
+    <style>
+      * {
+        outline: rgba(255,0,0,0.3) dotted 1px;
+      }
+
+      html {
+        font-family: "Parkinsans", sans-serif;
+        /* scrollbar-gutter: stable; */
+        /* overflow-y: scroll; */
+      }
+
+      ::-webkit-scrollbar {
+        background-color: transparent;
+        width: 10px;
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--dark-blue) var(--custom-white);
+      }
+      *::-webkit-scrollbar-track {
+        background-color: var(--custom-white);
+      }
+      *::-webkit-scrollbar-thumb {
+        background-color: var(--dark-blue);
+        border-radius: 20px;
+        border: 3px solid var(--custom-white);
+      }
+
+      #app {
+        position: relative;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .animated-bg-spin {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        animation: spin 200s linear infinite;
+        filter: blur(10px);
+        z-index: -1;
+      }
+
+      .animated-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        transform: scale(5);
+      }
+    </style>
+
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js"
+      integrity="sha256-Fb0zP4jE3JHqu+IBB9YktLcSjI1Zc6J2b6gTjB0LpoM="
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
