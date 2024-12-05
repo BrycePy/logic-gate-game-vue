@@ -6,9 +6,10 @@ import { mountApp, getCallerArgs } from '../libs/utils';
 import WorldSelection from '../pages/WorldSelection.vue';
 import { hintCursor } from '@/main';
 
+import { inject } from 'vue';
 import { setupLifecycleNotifier } from '../libs/utils';
 import { eventManager } from '@/main';
-setupLifecycleNotifier(eventManager);
+setupLifecycleNotifier(eventManager, inject('uuid'));
 
 onMounted(() => {
     console.log('mounted')

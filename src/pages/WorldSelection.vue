@@ -10,9 +10,10 @@ import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
 import { hintCursor } from '@/main';
 
+import { inject } from 'vue';
 import { setupLifecycleNotifier } from '../libs/utils';
 import { eventManager } from '@/main';
-setupLifecycleNotifier(eventManager);
+setupLifecycleNotifier(eventManager, inject('uuid'));
 
 onBrowserBack(()=>{
     mountApp(MainMenu);

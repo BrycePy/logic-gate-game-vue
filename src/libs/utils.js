@@ -19,8 +19,26 @@ const onBrowserBack = (callback) => {
 
 export { onBrowserBack };
 
+
+const _mountApp = async (app) => {
+  let uuid = Math.random().toString(36).substring(2);
+  app.__logicGameAppUUID = uuid;
+  app.provide("uuid", uuid);
+  let waitForMounted = eventManager.wait("mounted", (data) => data === uuid);
+  app.mount("#app");
+  await waitForMounted;
+};
+
+const _unmountApp = async (app) => {
+  let uuid = app.__logicGameAppUUID;
+  let waitForUnmount = eventManager.wait("beforeUnmount", (data) => data === uuid);
+  app.unmount();
+  await waitForUnmount;
+};
+
 const transitionDuration = 250;
 let currentApp = null;
+let currentAppUUID = null;
 let appContainer = $("#app")[0];
 let callerArgs = null;
 appContainer.style.opacity = 0;
@@ -29,15 +47,11 @@ const mountApp = async (appVue, data) => {
   if (currentApp) {
     appContainer.style.opacity = 0;
     await sleep(transitionDuration);
-    let waitForUnmount = eventManager.wait("beforeUnmount");
-    currentApp.unmount();
-    await waitForUnmount;
+    await _unmountApp(currentApp);
   }
   callerArgs = data;
   currentApp = createApp(appVue);
-  let waitForMounted = eventManager.wait("mounted");
-  currentApp.mount("#app");
-  await waitForMounted;
+  await _mountApp(currentApp);
   appContainer.style.opacity = 1;
 };
 const getCallerArgs = () => {
@@ -75,6 +89,7 @@ export { Throttle };
 
 const setupLifecycleNotifier = (eventManager, data) => {
   onMounted(() => {
+    console.log("mounted", data);
     eventManager.publish("mounted", data);
   });
   onBeforeUnmount(() => {
