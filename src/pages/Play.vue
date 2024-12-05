@@ -1,17 +1,25 @@
 <script setup>
 import 'bootstrap/dist/css/bootstrap.css'
-import { onMounted } from 'vue';
+import { onBeforeUnmount, onMounted } from 'vue';
 import { mountApp, getCallerArgs } from '../libs/utils';
 import WorldSelection from './WorldSelection.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
 import { LogicCanvas } from '@/libs/logicgate_front';
 import { World } from '@/libs/logicgate_back';
+import { hintCursor } from '@/main';
+import { sleep } from '../libs/utils';
 
-onBrowserBack(() => {
-    console.log('back')
+import { setupLifecycleNotifier } from '../libs/utils';
+import { eventManager } from '@/main';
+setupLifecycleNotifier(eventManager);
+
+const handleBack = ()=> {
+    hintCursor.clear();
     mountApp(WorldSelection);
-})
+}
+
+onBrowserBack(handleBack)
 
 const getLevel = () => {
     let urlLevelID = window.location.hash.split('?')[1];
@@ -27,7 +35,8 @@ const getLevel = () => {
     return level;
 }
 
-onMounted(() => {
+let logicCanvas;
+onMounted(async () => {
     let level = getLevel();
     if (!level) return;
 
@@ -37,9 +46,30 @@ onMounted(() => {
 
     let targetDiv = document.querySelector('.logic-canvas-here');
     let world = new World();
-    let logicCanvas = new LogicCanvas(world, targetDiv);
+    logicCanvas = new LogicCanvas(world, targetDiv);
     logicCanvas.startVisualTick();
     logicCanvas.startWorldTick(20);
+
+    let in1 = logicCanvas.createInput();
+    let in2 = logicCanvas.createInput();
+    let out1 = logicCanvas.createOutput();
+    let andGate = logicCanvas.createGate('AND');
+
+    hintCursor.setCanvas(logicCanvas);
+
+    await hintCursor.moveGate(andGate, 100, 100);
+    await sleep(1000);
+    await hintCursor.add({
+        element: $('.back-button')[0],
+        animation: 'click'
+    });
+})
+
+onBeforeUnmount(() => {
+    console.log('logic canvas removed')
+    logicCanvas.stopVisualTick();
+    logicCanvas.stopWorldTick();
+    logicCanvas.remove();
 })
 
 </script>
@@ -47,7 +77,7 @@ onMounted(() => {
 <template>
     <div class="app-inner">
         <div class="back-button">
-            <button class="btn btn-outline-secondary" @click="mountApp(WorldSelection)">Back</button>
+            <button class="btn btn-outline-secondary" @click="handleBack()">Back</button>
         </div>
     
         <div class="d-flex justify-content-center mt-5">

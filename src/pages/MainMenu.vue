@@ -4,16 +4,31 @@ import '../assets/main.css';
 import { onMounted } from 'vue';
 import { mountApp, getCallerArgs } from '../libs/utils';
 import WorldSelection from '../pages/WorldSelection.vue';
+import { hintCursor } from '@/main';
+
+import { setupLifecycleNotifier } from '../libs/utils';
+import { eventManager } from '@/main';
+setupLifecycleNotifier(eventManager);
 
 onMounted(() => {
+    console.log('mounted')
     let urlUpToHash = window.location.href.split('#')[0];
     let newUrl = urlUpToHash + '#main-menu';
     window.history.pushState({}, '', newUrl);
 
     const startBtn = document.getElementById('start-btn');
+
+    hintCursor.clear();
+    hintCursor.add({
+        element: startBtn,
+        animation: 'click'
+    });
+
     startBtn.addEventListener('click', () => {
+        hintCursor.next();
         mountApp(WorldSelection);
     }, { once: true });
+
 })
 
 </script>

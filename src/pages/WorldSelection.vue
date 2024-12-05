@@ -8,6 +8,11 @@ import MainMenu from '../pages/MainMenu.vue';
 import Play from '../pages/Play.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
+import { hintCursor } from '@/main';
+
+import { setupLifecycleNotifier } from '../libs/utils';
+import { eventManager } from '@/main';
+setupLifecycleNotifier(eventManager);
 
 onBrowserBack(()=>{
     mountApp(MainMenu);
@@ -17,6 +22,13 @@ onMounted(() => {
     let urlUpToHash = window.location.href.split('#')[0];
     let newUrl = urlUpToHash + '#world-selection';
     window.history.pushState({}, '', newUrl);
+
+    const startBtn = $('.go-to-play')[0];
+    hintCursor.clear();
+    hintCursor.add({
+        element: startBtn,
+        animation: 'click'
+    });
 })
 
 const handlePlay = (world, level) => {

@@ -10,6 +10,8 @@ import logicGateDefaultTemplate from "./logicgate_template.js";
 
 import '@/assets/logicgate.css'
 
+import { Throttle } from "./utils.js";
+
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const loadTemplate = () => {
@@ -78,13 +80,16 @@ class LogicCanvas {
 
 		this.canvas = document.createElement("canvas");
 		this.domElement.appendChild(this.canvas);
-		this.updateCanvas();
+		this.updateCanvas(true);
 		this.clearCanvas();
 		this.drawGrid();
 
+		let throttle = new Throttle(100);
 		this.onResize = () => {
-			this.updateCanvas();
-			this.visualTick();
+			throttle.run(() => {
+				this.updateCanvas();
+				this.visualTick();
+			})
 		}
 		window.addEventListener("resize", this.onResize);
 
@@ -121,7 +126,19 @@ class LogicCanvas {
 		});
 	}
 
-	updateCanvas() {
+	updateCanvas(first) {
+		if(!first){
+			let xScale = this.domElement.clientWidth / this.canvas.width;
+			let yScale = this.domElement.clientHeight / this.canvas.height;
+			if(xScale !== 1 || yScale !== 1){
+				this.world.gates.forEach(gate => {
+					let x = parseInt(gate.domElement.style.left) * xScale;
+					let y = parseInt(gate.domElement.style.top) * yScale;
+					gate.domElement.style.left = x + "px";
+					gate.domElement.style.top = y + "px";
+				});
+			}
+		}
 		this.canvas.width = this.domElement.clientWidth;
 		this.canvas.height = this.domElement.clientHeight;
 		this.canvas.style.width = this.domElement.clientWidth + "px";
