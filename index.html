@@ -13,11 +13,11 @@
     />
 
     <title>Vite App</title>
-    <script type="module" crossorigin src="/logic-gate-game-vue/assets/index-DzCZXawy.js"></script>
-    <link rel="stylesheet" crossorigin href="/logic-gate-game-vue/assets/index-DdKgK6tg.css">
+    <script type="module" crossorigin src="/logic-gate-game-vue/assets/index-DIvktIVb.js"></script>
+    <link rel="stylesheet" crossorigin href="/logic-gate-game-vue/assets/index-DRp77Dz9.css">
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app" class="d-flex justify-content-center w-100"></div>
     <div class="animated-bg-spin">
       <img alt="Background" class="animated-bg" src="/logic-gate-game-vue/background.png" />
     </div>
@@ -33,24 +33,15 @@
         /* overflow-y: scroll; */
       }
 
-      ::-webkit-scrollbar {
-        background-color: transparent;
-        width: 10px;
-      }
-      * {
-        scrollbar-width: thin;
-        scrollbar-color: var(--dark-blue) var(--custom-white);
-      }
-      *::-webkit-scrollbar-track {
-        background-color: var(--custom-white);
-      }
-      *::-webkit-scrollbar-thumb {
-        background-color: var(--dark-blue);
-        border-radius: 20px;
-        border: 3px solid var(--custom-white);
+      body {
+        min-width: 400px;
       }
 
       #app {
+        position: relative;
+      }
+
+      .app-inner {
         position: relative;
       }
 
@@ -71,7 +62,7 @@
         width: 100%;
         height: 100%;
         overflow: visible;
-        animation: spin 200s linear infinite;
+        animation: spin 300s linear infinite;
         filter: blur(10px);
         z-index: -1;
       }
