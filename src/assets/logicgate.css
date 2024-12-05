@@ -4,14 +4,14 @@
 
 .logic-gate-canvas{
     position: absolute;
-    background-color: #ccc;
+    background-color: rgba(0, 0, 0, 0);
     padding: 0px;
     margin: 0px;
 }
 
 .logic-gate-div{
     position: relative;
-    background-color: #ccc;
+    background-color: rgba(100, 100, 100, 0.3);
     overflow: hidden;
 }
 

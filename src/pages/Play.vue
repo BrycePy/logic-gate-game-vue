@@ -5,112 +5,115 @@ import { mountApp, getCallerArgs } from '../libs/utils';
 import WorldSelection from './WorldSelection.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
+import { LogicCanvas } from '@/libs/logicgate_front';
+import { World } from '@/libs/logicgate_back';
 
-onBrowserBack(()=>{
+onBrowserBack(() => {
     console.log('back')
     mountApp(WorldSelection);
 })
 
-const getLevel = ()=>{
-    let urlLevelID = window.location.search?.substring(1);
-    urlLevelID = urlLevelID? decodeURI(urlLevelID): undefined;
+const getLevel = () => {
+    let urlLevelID = window.location.hash.split('?')[1];
+    urlLevelID = urlLevelID ? decodeURI(urlLevelID) : undefined;
     let callerLevelID = getCallerArgs();
     let levelID = urlLevelID || callerLevelID;
     console.log(callerLevelID, urlLevelID)
     let level = idToLevel[levelID];
-    if(!level) {
+    if (!level) {
         mountApp(WorldSelection);
         return;
     }
     return level;
 }
 
-onMounted(()=>{
+onMounted(() => {
     let level = getLevel();
-    if(!level) return;
-    
-    window.history.pushState({}, '', `/play?${level.id}`);
+    if (!level) return;
+
+    let urlUpToHash = window.location.href.split('#')[0];
+    let newUrl = urlUpToHash + `#play?${level.id}`;
+    window.history.pushState({}, '', newUrl);
+
+    let targetDiv = document.querySelector('.logic-canvas-here');
+    let world = new World();
+    let logicCanvas = new LogicCanvas(world, targetDiv);
+    logicCanvas.startVisualTick();
+    logicCanvas.startWorldTick(20);
 })
 
 </script>
 
 <template>
-    <img alt="Vue logo" class="logo" src="/logowhite.png" />
-    <img alt="Vue logo" class="logo" src="/logowhite.png" />
-    <button class="play-wrapper" id="start-btn">
-        <img src="../assets/play.svg" class="play-btn" viewBox="0 0 16 16"></img>
-    </button>
+    <div class="app-inner">
+        <div class="back-button">
+            <button class="btn btn-outline-secondary" @click="mountApp(WorldSelection)">Back</button>
+        </div>
+    
+        <div class="d-flex justify-content-center mt-5">
+            <div class="logic-canvas-here"></div>
+        </div>
+        <div class="challenge-container">
+            <div class="challenge">
+                <h1 class="challenge-title">Challenge</h1>
+                <p class="challenge-description">Description</p>
+                <div class="challenge-buttons">
+                    <button class="btn btn-primary">Reset</button>
+                    <button class="btn btn-primary">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
-#app {
-  max-width: none;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+.back-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 1em;
 }
 
-@media (min-width: 1024px) {
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+.logic-canvas-here {
+    width: 300px;
+    height: 300px;
 }
 
-</style>
-
-<style scoped>
-
-header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-}
-
-.logo {
-    display: block;
-    height: 200px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-@media (min-width: 1024px) {
-    header .wrapper {
-        display: flex;
-        place-items: flex-start;
-        flex-wrap: wrap;
+@media (min-width: 600px) {
+    .logic-canvas-here {
+        width: 400px;
+        height: 400px;
     }
 }
 
-.play-wrapper {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-    cursor: pointer;
-    /* fill: white; */
-    border: 3px solid white;
-    border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
-    transition: background-color 0.3s, width 0.3s, height 0.3s;
+@media (min-width: 1024px) {
+    .back-button {
+        padding: 0 1em;
+    }
+
+    .logic-canvas-here {
+        width: 600px;
+        height: 600px;
+    }
+}
+</style>
+
+<style scoped>
+.app-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: none;
+    margin: 0 auto;
+    padding: 1rem;
+    gap: 2rem;
+    font-weight: normal;
 }
 
-.play-btn {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-45%, -50%);
-    width: 75px;
-    height: 75px;
-}
-
-.play-wrapper:hover {
-    background-color: rgba(0, 0, 0, 0.7);
-    width: 110px;
-    height: 110px;
+@media (min-width: 1024px) {
+    .app-inner {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        padding: 0 2rem;
+    }
 }
 </style>

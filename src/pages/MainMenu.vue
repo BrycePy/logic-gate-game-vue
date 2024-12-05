@@ -5,8 +5,10 @@ import { onMounted } from 'vue';
 import { mountApp, getCallerArgs } from '../libs/utils';
 import WorldSelection from '../pages/WorldSelection.vue';
 
-onMounted(()=>{
-    window.history.pushState({}, '', '/');
+onMounted(() => {
+    let urlUpToHash = window.location.href.split('#')[0];
+    let newUrl = urlUpToHash + '#main-menu';
+    window.history.pushState({}, '', newUrl);
 
     const startBtn = document.getElementById('start-btn');
     startBtn.addEventListener('click', () => {
@@ -18,11 +20,15 @@ onMounted(()=>{
 
 <template>
     <!-- <main> -->
-    <img alt="Vue logo" class="logo" src="/logowhite.png" />
-
-    <button class="play-wrapper" id="start-btn">
-        <img src="../assets/play.svg" class="play-btn" viewBox="0 0 16 16"></img>
-    </button>
+    <div class="app-inner">
+        <img alt="Vue logo" class="logo" src="/logowhite.png" />
+    
+        <div class="d-flex justify-content-center">
+            <a class="start-btn" id="start-btn">
+                <img src="../assets/play.svg" class="start-btn-img" viewBox="0 0 16 16"></img>
+            </a>
+        </div>
+    </div>
 </template>
 
 <style scoped>
@@ -34,12 +40,22 @@ header {
 
 .logo {
     display: block;
-    height: 200px;
+    width: 300px;
     margin-left: auto;
     margin-right: auto;
 }
 
+@media (min-width: 600px) {
+    .logo {
+        width: 500px;
+    }
+}
+
 @media (min-width: 1024px) {
+    .logo {
+        width: 800px;
+    }
+
     header .wrapper {
         display: flex;
         place-items: flex-start;
@@ -47,23 +63,24 @@ header {
     }
 }
 
-.play-wrapper {
+.start-btn {
     position: relative;
     width: 100px;
     height: 100px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-    cursor: pointer;
-    /* fill: white; */
-    border: 3px solid white;
+    margin: 1em;
+    background-color: rgba(0, 0, 0, 0.3);
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
-    transition: background-color 0.3s, width 0.3s, height 0.3s;
+    border: 1px solid #888;
 }
 
-.play-btn {
+.start-btn:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    width: 105px;
+    height: 105px;
+}
+
+.start-btn-img {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -71,11 +88,4 @@ header {
     width: 75px;
     height: 75px;
 }
-
-.play-wrapper:hover {
-    background-color: rgba(0, 0, 0, 0.7);
-    width: 110px;
-    height: 110px;
-}
 </style>
-

@@ -8,7 +8,7 @@ import {
 } from "./logicgate_back.js";
 import logicGateDefaultTemplate from "./logicgate_template.js";
 
-import './assets/logicgate.css'
+import '@/assets/logicgate.css'
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 

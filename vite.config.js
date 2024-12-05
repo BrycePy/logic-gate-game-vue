@@ -6,6 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/logic-gate-game-vue/',
   plugins: [
     vue(),
     vueDevTools(),
@@ -14,6 +15,5 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
-  },
-  baseUrl: './'
+  }
 })

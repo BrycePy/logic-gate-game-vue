@@ -14,7 +14,9 @@ onBrowserBack(()=>{
 })
 
 onMounted(() => {
-    window.history.pushState({}, '', '/world-selection');
+    let urlUpToHash = window.location.href.split('#')[0];
+    let newUrl = urlUpToHash + '#world-selection';
+    window.history.pushState({}, '', newUrl);
 })
 
 const handlePlay = (world, level) => {
@@ -25,31 +27,32 @@ const handlePlay = (world, level) => {
 </script>
 
 <template>
-    <!-- back button -->
-    <div class="back-button">
-        <button class="btn btn-outline-secondary" @click="mountApp(MainMenu)">Back</button>
-    </div>
-
-    <img class="logo" src="/logowhite.png" />
-
-    <div id="world-selection" class="world-selection-container" data-bs-theme="dark">
-        <div v-for="world in worlds" class="world">
-            <h1 class="world-title">{{ world.name }}</h1>
-            <div class="level-container">
-                <div v-for="level in world.levels" class="level">
-                    <div class="card" style="width: 18rem;">
-                        <!-- <img class="card-img-top" src="..." alt="Card image cap"> -->
-                        <div class="card-body">
-                            <h5 class="card-title">{{ level.name }}
-                                <div class="star-container">
-                                    <img src="../assets/star-fill.svg" alt="star" class="star" />
-                                    <img src="../assets/star-fill.svg" alt="star" class="star" />
-                                    <img src="../assets/star.svg" alt="star" class="star" />
-                                </div>
-                            </h5>
-                            <p class="card-text">{{ level.description }}</p>
-                            <button href="#" class="btn btn-primary go-to-play" @click="handlePlay(world, level)">Go
-                                somewhere</button>
+    <div class="app-inner">
+        <div class="back-button">
+            <button class="btn btn-outline-secondary" @click="mountApp(MainMenu)">Back</button>
+        </div>
+    
+        <img class="logo" src="/logowhite.png" />
+    
+        <div id="world-selection" class="world-selection-container" data-bs-theme="dark">
+            <div v-for="world in worlds" class="world">
+                <h1 class="world-title">{{ world.name }}</h1>
+                <div class="level-container">
+                    <div v-for="level in world.levels" class="level">
+                        <div class="card" style="width: 18rem;">
+                            <!-- <img class="card-img-top" src="..." alt="Card image cap"> -->
+                            <div class="card-body">
+                                <h5 class="card-title">{{ level.name }}
+                                    <div class="star-container">
+                                        <img src="../assets/star-fill.svg" alt="star" class="star" />
+                                        <img src="../assets/star-fill.svg" alt="star" class="star" />
+                                        <img src="../assets/star.svg" alt="star" class="star" />
+                                    </div>
+                                </h5>
+                                <p class="card-text">{{ level.description }}</p>
+                                <button href="#" class="btn btn-primary go-to-play" @click="handlePlay(world, level)">Go
+                                    somewhere</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -69,9 +72,16 @@ const handlePlay = (world, level) => {
 
 .logo {
     display: block;
-    height: 200px;
+    width: 300px;
     margin-left: auto;
     margin-right: auto;
+}
+
+@media (min-width: 600px) {
+    .logo {
+        width: 500px;
+        margin-top: 2em;
+    }
 }
 
 .world-title {
@@ -131,69 +141,5 @@ header {
         place-items: flex-start;
         flex-wrap: wrap;
     }
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.animated-bg-spin {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    animation: spin 200s linear infinite;
-    filter: blur(10px);
-    z-index: -1;
-}
-
-.animated-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: -1;
-    transform: scale(5);
-}
-
-.play-wrapper {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-    cursor: pointer;
-    fill: white;
-    border: 3px solid white;
-    border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
-    transition: background-color 0.3s, width 0.3s, height 0.3s;
-}
-
-.play-btn {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-45%, -50%);
-    width: 75px;
-    height: 75px;
-}
-
-.play-wrapper:hover {
-    background-color: rgba(0, 0, 0, 0.7);
-    width: 110px;
-    height: 110px;
 }
 </style>

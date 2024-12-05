@@ -11,13 +11,12 @@ import Play from './pages/Play.vue'
 const mainEventManager = new EventManager();
 export { mainEventManager as eventManager };
 
+console.log(location)
 
-
-
-let path = document.location.pathname;
-if(path.startsWith("/play")) {
+let hash = document.location.hash;
+if(hash.startsWith("#play")) {
   mountApp(Play);
-}else if(path.startsWith("/world-selection")) {
+}else if(hash.startsWith("#world-selection")) {
   mountApp(WorldSelection);
 }else {
   mountApp(MainMenu);
