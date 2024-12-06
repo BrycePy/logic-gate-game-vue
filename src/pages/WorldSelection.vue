@@ -2,18 +2,13 @@
 import 'bootstrap/dist/css/bootstrap.css'
 import worlds from '@/levels/levels';
 import '../assets/main.css';
-import { onMounted } from 'vue';
+import { onBeforeUnmount, onMounted } from 'vue';
 import { mountApp, getCallerArgs } from '../libs/utils';
 import MainMenu from '../pages/MainMenu.vue';
 import Play from '../pages/Play.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
 import { hintCursor } from '@/main';
-
-import { inject } from 'vue';
-import { setupLifecycleNotifier } from '../libs/utils';
-import { eventManager } from '@/main';
-setupLifecycleNotifier(eventManager, inject('uuid'));
 
 onBrowserBack(()=>{
     mountApp(MainMenu);
@@ -24,16 +19,20 @@ onMounted(() => {
     let newUrl = urlUpToHash + '#world-selection';
     window.history.pushState({}, '', newUrl);
 
-    const startBtn = $('.go-to-play')[0];
-    hintCursor.clear();
-    hintCursor.add({
-        element: startBtn,
-        animation: 'click'
-    });
+    // const startBtn = $('.go-to-play')[0];
+    // hintCursor.clear();
+    // hintCursor.add({
+    //     element: startBtn,
+    //     animation: 'click'
+    // });
 })
 
-const handlePlay = (world, level) => {
-    console.log(world, level);
+onBeforeUnmount(()=>{
+    // $('.wsimg').remove();
+})
+
+const handlePlay = (level) => {
+    // console.log(world, level);
     mountApp(Play, level.id);
 }
 
@@ -45,7 +44,7 @@ const handlePlay = (world, level) => {
             <button class="btn btn-outline-secondary" @click="mountApp(MainMenu)">Back</button>
         </div>
     
-        <img class="logo" src="/logowhite.png" />
+        <img class="logo wsimg" src="/logowhite.png" />
     
         <div id="world-selection" class="world-selection-container" data-bs-theme="dark">
             <div v-for="world in worlds" class="world">
@@ -57,14 +56,13 @@ const handlePlay = (world, level) => {
                             <div class="card-body">
                                 <h5 class="card-title">{{ level.name }}
                                     <div class="star-container">
-                                        <img src="../assets/star-fill.svg" alt="star" class="star" />
-                                        <img src="../assets/star-fill.svg" alt="star" class="star" />
-                                        <img src="../assets/star.svg" alt="star" class="star" />
+                                        <img src="../assets/star-fill.svg" alt="star" class="star wsimg" />
+                                        <img src="../assets/star-fill.svg" alt="star" class="star wsimg" />
+                                        <img src="../assets/star.svg" alt="star" class="star wsimg" />
                                     </div>
                                 </h5>
                                 <p class="card-text">{{ level.description }}</p>
-                                <button href="#" class="btn btn-primary go-to-play" @click="handlePlay(world, level)">Go
-                                    somewhere</button>
+                                <button class="btn btn-primary go-to-play float-right" @click="handlePlay(level)">Start</button>
                             </div>
                         </div>
                     </div>

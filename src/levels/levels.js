@@ -1,9 +1,27 @@
+import smarthome1 from "./Intermediate/smarthome1.vue";
+
+class LevelBase {
+    constructor() {
+        this.id = "";
+        this.name = "";
+        this.description = "";
+    }
+
+    onMounted() {
+    }
+
+    onSubmit() {
+    }
+}
 
 const worlds = [
     {name: "Basic", description: "Basic level", levels: [
         {name: "Level 1", description: "Level 1Level 1Level 1Level 1Level 1Level 1Level 1"},
         {name: "Level 2", description: "Level 2Level 2Level 2Level 2Level 2Level 2Level 2"},
         {name: "Level 3", description: "Level 3Level 3Level 3Level 3Level 3Level 3Level 3"},
+    ]},
+    {name: "Intermediate", description: "Intermediate level", levels: [
+        smarthome1
     ]},
     {name: "Advanced", description: "Advanced level", levels: [
         {name: "Level 4", description: "Level 4Level 1Level 1Level 1Level 1Level 1Level 1"},
@@ -38,5 +56,5 @@ worlds.forEach(world => {
 
 export default worlds;
 
-export { idToLevel };
+export { idToLevel, LevelBase };
 

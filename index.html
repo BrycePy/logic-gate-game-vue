@@ -21,8 +21,18 @@
     </div>
 
     <style>
+      @keyframes blinkOutline {
+        0%, 100% {
+          outline-color: rgba(255,0,0,0.0);
+        }
+        50% {
+          outline-color: rgba(255,0,0,0.3);
+        }
+      }
+
       * {
         outline: rgba(255,0,0,0.3) dotted 1px;
+        animation: blinkOutline 3s infinite;
       }
 
       html {
@@ -36,6 +46,7 @@
       }
 
       #app {
+        min-width: 400px;
         position: relative;
       }
 

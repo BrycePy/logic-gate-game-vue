@@ -600,6 +600,10 @@ class LogicCanvas {
 		return result;
 	}
 
+	getGateTemplate(gateType) {
+		return this.templates[gateType];
+	}
+
 	createGate(fundamentalGateType, x, y, draggable, removeable) {
 		if (x === undefined) x = this.domElement.clientWidth / 2;
 		if (y === undefined) y = this.domElement.clientHeight / 2;

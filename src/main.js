@@ -6,6 +6,8 @@ import MainMenu from './pages/MainMenu.vue'
 import WorldSelection from './pages/WorldSelection.vue'
 import Play from './pages/Play.vue'
 import { LogicCanvasHint } from './libs/hintcursor';
+import Nothing from './pages/nothing.vue';
+import worlds from './levels/levels';
 
 const mainEventManager = new EventManager();
 export { mainEventManager as eventManager };
@@ -20,9 +22,25 @@ if(hash.startsWith("#play")) {
   mountApp(Play);
 }else if(hash.startsWith("#world-selection")) {
   mountApp(WorldSelection);
+}else if(hash.startsWith("#smart-home-debug")) {
+  mountApp(WorldSelection);
 }else {
   mountApp(MainMenu);
 }
+
+// const testMemleak = async () => {
+//   for(let i=0; i<10; i++) {
+//     await mountApp(MainMenu);
+//     await sleep(100);
+//     await mountApp(WorldSelection);
+//     await sleep(100);
+//     await mountApp(Play, worlds[1].levels[0].id);
+//     await sleep(100);
+//   }
+// }
+
+// testMemleak();
+
 
 // const testFlow = async () => {
 //   // mountApp(MainMenu);

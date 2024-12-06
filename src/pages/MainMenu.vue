@@ -6,30 +6,12 @@ import { mountApp, getCallerArgs } from '../libs/utils';
 import WorldSelection from '../pages/WorldSelection.vue';
 import { hintCursor } from '@/main';
 
-import { inject } from 'vue';
-import { setupLifecycleNotifier } from '../libs/utils';
-import { eventManager } from '@/main';
-setupLifecycleNotifier(eventManager, inject('uuid'));
 
 onMounted(() => {
     console.log('mounted')
     let urlUpToHash = window.location.href.split('#')[0];
     let newUrl = urlUpToHash + '#main-menu';
     window.history.pushState({}, '', newUrl);
-
-    const startBtn = document.getElementById('start-btn');
-
-    hintCursor.clear();
-    hintCursor.add({
-        element: startBtn,
-        animation: 'click'
-    });
-
-    startBtn.addEventListener('click', () => {
-        hintCursor.next();
-        mountApp(WorldSelection);
-    }, { once: true });
-
 })
 
 </script>
@@ -40,7 +22,7 @@ onMounted(() => {
         <img alt="Vue logo" class="logo" src="/logowhite.png" />
     
         <div class="d-flex justify-content-center">
-            <a class="start-btn" id="start-btn">
+            <a class="start-btn" id="start-btn" @click="mountApp(WorldSelection)">
                 <img src="../assets/play.svg" class="start-btn-img" viewBox="0 0 16 16"></img>
             </a>
         </div>

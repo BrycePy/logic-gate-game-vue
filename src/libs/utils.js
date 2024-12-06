@@ -1,5 +1,5 @@
 import { eventManager } from "@/main";
-import { onMounted, onBeforeUnmount } from "vue";
+import { onMounted, onBeforeUnmount, onUnmounted } from "vue";
 import { createApp } from "vue";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -21,17 +21,13 @@ export { onBrowserBack };
 
 
 const _mountApp = async (app) => {
-  let uuid = Math.random().toString(36).substring(2);
-  app.__logicGameAppUUID = uuid;
-  app.provide("uuid", uuid);
-  let waitForMounted = eventManager.wait("mounted", (data) => data === uuid);
   app.mount("#app");
-  await waitForMounted;
 };
 
 const _unmountApp = async (app) => {
-  let uuid = app.__logicGameAppUUID;
-  let waitForUnmount = eventManager.wait("beforeUnmount", (data) => data === uuid);
+  let waitForUnmount = new Promise((resolve) => {
+    app.onUnmount(resolve);
+  });
   app.unmount();
   await waitForUnmount;
 };
@@ -54,10 +50,13 @@ const mountApp = async (appVue, data) => {
   await _mountApp(currentApp);
   appContainer.style.opacity = 1;
 };
+const setCallerArgs = (data) => {
+  callerArgs = data;
+}
 const getCallerArgs = () => {
   return callerArgs;
 };
-export { mountApp, getCallerArgs };
+export { mountApp, getCallerArgs, setCallerArgs };
 
 class Throttle {
   constructor(delayMS) {
@@ -88,13 +87,14 @@ class Throttle {
 export { Throttle };
 
 const setupLifecycleNotifier = (eventManager, data) => {
-  onMounted(() => {
-    console.log("mounted", data);
-    eventManager.publish("mounted", data);
-  });
-  onBeforeUnmount(() => {
-    eventManager.publish("beforeUnmount", data);
-  });
+  // onMounted(() => {
+  //   console.log("mounted", data);
+  //   eventManager.publish("mounted", data);
+  // });
+  // onUnmounted(() => {
+  //   console.log("unmounted", data);
+  //   eventManager.publish("unmounted", data);
+  // });
 }
 
 export { setupLifecycleNotifier };

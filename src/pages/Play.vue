@@ -1,7 +1,7 @@
 <script setup>
 import 'bootstrap/dist/css/bootstrap.css'
 import { onBeforeUnmount, onMounted } from 'vue';
-import { mountApp, getCallerArgs } from '../libs/utils';
+import { mountApp, getCallerArgs, setCallerArgs } from '../libs/utils';
 import WorldSelection from './WorldSelection.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
@@ -11,10 +11,7 @@ import { hintCursor } from '@/main';
 import { sleep } from '../libs/utils';
 import { Modal } from 'bootstrap';
 
-import { inject } from 'vue';
-import { setupLifecycleNotifier } from '../libs/utils';
-import { eventManager } from '@/main';
-setupLifecycleNotifier(eventManager, inject('uuid'));
+import { createApp } from 'vue';
 
 const handleBack = ()=> {
     hintCursor.clear();
@@ -28,7 +25,7 @@ const getLevel = () => {
     urlLevelID = urlLevelID ? decodeURI(urlLevelID) : undefined;
     let callerLevelID = getCallerArgs();
     let levelID = urlLevelID || callerLevelID;
-    console.log(callerLevelID, urlLevelID)
+    // console.log(callerLevelID, urlLevelID)
     let level = idToLevel[levelID];
     if (!level) {
         mountApp(WorldSelection);
@@ -37,7 +34,19 @@ const getLevel = () => {
     return level;
 }
 
+const populateGateDeck = (logicCanvas)=>{
+    let gateDeck = document.querySelector('.logic-gate-deck');
+    let gates = ['AND', 'OR', 'NOT', 'NAND', 'XOR'];
+    gates.forEach(gate => {
+        let gateDiv = logicCanvas.getGateTemplate(gate);
+        let clone = gateDiv.cloneNode(true);
+        clone.classList.add('gate-deck-item');
+        gateDeck.appendChild(clone);
+    });
+}
+
 let logicCanvas, modal;
+let challengeApp;
 onMounted(async () => {
     let level = getLevel();
     if (!level) return;
@@ -52,52 +61,54 @@ onMounted(async () => {
     logicCanvas.startVisualTick();
     logicCanvas.startWorldTick(20);
 
-    let in1 = logicCanvas.createInput();
-    let in2 = logicCanvas.createInput();
-    let out1 = logicCanvas.createOutput();
-    let andGate = logicCanvas.createGate('AND');
+    populateGateDeck(logicCanvas);
+    // populateGateDeck(logicCanvas);
 
-    hintCursor.setCanvas(logicCanvas);
+    // console.log(level);
+    challengeApp = createApp(level)
+    setCallerArgs({
+        logicCanvas,
+    })
+    challengeApp.mount('#challenge');
 
-    // await hintCursor.moveGate(andGate, 100, 100);
+    // let in1 = logicCanvas.createInput();
+    // let in2 = logicCanvas.createInput();
+    // let out1 = logicCanvas.createOutput();
+    // let andGate = logicCanvas.createGate('AND');
 
-    await hintCursor.addWire(in1.out(0), andGate.in(0));
-    await hintCursor.addWire(in2.out(0), andGate.in(1));
-    await hintCursor.addWire(andGate.out(0), out1.in(0));
+    // hintCursor.setCanvas(logicCanvas);
+    // await hintCursor.addWire(in1.out(0), andGate.in(0));
+    // await hintCursor.addWire(in2.out(0), andGate.in(1));
+    // await hintCursor.addWire(andGate.out(0), out1.in(0));
+    // await sleep(1000);
 
-    await sleep(1000);
-
-    let submitBtn = document.getElementById('submit-btn');
-    hintCursor.add({
-        element: submitBtn,
-        animation: 'click'
-    });
-
-    await new Promise((resolve) => {
-        submitBtn.addEventListener('click', () => {
-            hintCursor.next();
-            resolve();
-        }, { once: true });
-    });
-
-    modal = new Modal(document.getElementById('reviewPopup'));
-    modal?.show();
-
-    // await hintCursor.add({
-    //     element: $('.back-button')[0],
+    // let submitBtn = document.getElementById('submit-btn');
+    // hintCursor.add({
+    //     element: submitBtn,
     //     animation: 'click'
     // });
+
+    // await new Promise((resolve) => {
+    //     submitBtn.addEventListener('click', () => {
+    //         hintCursor.next();
+    //         resolve();
+    //     }, { once: true });
+    // });
+
+    // modal = new Modal(document.getElementById('reviewPopup'));
+    // modal?.show();
 })
 
 onBeforeUnmount(() => {
     console.log('logic canvas removed')
-    logicCanvas.stopVisualTick();
-    logicCanvas.stopWorldTick();
-    logicCanvas.remove();
+    logicCanvas?.stopVisualTick();
+    logicCanvas?.stopWorldTick();
+    logicCanvas?.remove();
+
+    challengeApp?.unmount();
 
     modal?.hide();
 })
-
 </script>
 
 <template>
@@ -105,19 +116,16 @@ onBeforeUnmount(() => {
         <div class="back-button">
             <button class="btn btn-outline-secondary" @click="handleBack()">Back</button>
         </div>
+
+        <img class="logo" src="/logowhite.png" />
     
-        <div class="d-flex justify-content-center mt-5">
+        <div class="d-flex justify-content-center m-1 logic-canvas-container">
             <div class="logic-canvas-here"></div>
+            <div class="logic-gate-deck"></div>
         </div>
+
         <div class="challenge-container">
-            <div class="challenge">
-                <h1 class="challenge-title">Challenge</h1>
-                <p class="challenge-description">Description</p>
-                <div class="challenge-buttons">
-                    <button class="btn btn-primary">Reset</button>
-                    <button class="btn btn-primary" id="submit-btn">Submit</button>
-                </div>
-            </div>
+            <div id="challenge"></div>
         </div>
     </div>
 
@@ -150,10 +158,50 @@ onBeforeUnmount(() => {
     padding: 1em;
 }
 
+.logo {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 5em;
+}
+
+.logic-canvas-container{
+    display: flex;
+    flex-direction: column;
+    /* justify-content: center; */
+    align-items: center;
+    gap: 1em;
+}
+
 .logic-canvas-here {
+    display: block;
     width: 300px;
     height: 300px;
 }
+
+.logic-gate-deck {
+    gap: 0.5em;
+    padding: 0.5em;
+
+    background-color: rgba(100, 100, 100, 0.2);
+    border-radius: 1em;
+
+    overflow-x: auto;
+    text-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.gate-deck-item {
+    display: inline-block;
+}
+
+.challenge-container {
+    padding: 1em;
+    border: 1px solid #111;
+}
+
+
 
 @media (min-width: 600px) {
     .logic-canvas-here {
@@ -163,10 +211,6 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 1024px) {
-    .back-button {
-        padding: 0 1em;
-    }
-
     .logic-canvas-here {
         width: 600px;
         height: 600px;
@@ -179,17 +223,32 @@ onBeforeUnmount(() => {
     display: grid;
     grid-template-columns: 1fr;
     max-width: none;
-    margin: 0 auto;
-    padding: 1rem;
-    gap: 2rem;
+    width: 100%;
+    max-width: 1800px;
+    margin: 1em;
+    padding: 2em;
+    padding-top: 5em;
+    gap: 2em;
     font-weight: normal;
+
+    border: 1px solid #666;
+    border-radius: 1em;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1400px) {
     .app-inner {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        padding: 0 2rem;
+        grid-template-columns: 1fr auto;
+    }
+
+    .logic-canvas-container {
+        order: 1;
+    }
+
+    .challenge-container {
+        order: 0;
     }
 }
 </style>
