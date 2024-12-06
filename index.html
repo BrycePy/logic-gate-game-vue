@@ -13,8 +13,8 @@
     />
 
     <title>Vite App</title>
-    <script type="module" crossorigin src="/logic-gate-game-vue/assets/index-D08n38s9.js"></script>
-    <link rel="stylesheet" crossorigin href="/logic-gate-game-vue/assets/index-Elk8iJNl.css">
+    <script type="module" crossorigin src="/logic-gate-game-vue/assets/index-B1lIwigt.js"></script>
+    <link rel="stylesheet" crossorigin href="/logic-gate-game-vue/assets/index-CjEPxJSW.css">
   </head>
   <body>
     <div id="app" class="d-flex justify-content-center w-100"></div>
@@ -23,8 +23,18 @@
     </div>
 
     <style>
+      @keyframes blinkOutline {
+        0%, 100% {
+          outline-color: rgba(255,0,0,0.0);
+        }
+        50% {
+          outline-color: rgba(255,0,0,0.3);
+        }
+      }
+
       * {
         outline: rgba(255,0,0,0.3) dotted 1px;
+        animation: blinkOutline 3s infinite;
       }
 
       html {
@@ -38,6 +48,7 @@
       }
 
       #app {
+        min-width: 400px;
         position: relative;
       }
 
