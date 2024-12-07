@@ -12,25 +12,38 @@
 .logic-gate-div{
     position: relative;
     background-color: rgba(100, 100, 100, 0.3);
-    overflow: hidden;
+    /* overflow: hidden; */
+    overflow: visible;
 }
 
 .logic-gate-div-relative {
     position: relative;
     float: left;
-    width: 50px;
-    height: 50px;
-    overflow: visible;
     margin: 15px 15px;
-    border: none;
 }
 
 .logic-gate-div-absolute {
     position: absolute;
+}
+
+.logic-gate{
+    transition: transform 0.2s;
     width: 50px;
     height: 50px;
     overflow: visible;
     border: none;
+}
+
+.logic-gate-long {
+    width: 60px;
+}
+
+.logic-gate-long .logic-gate-image {
+    width: 60px;
+}
+
+.logic-gate:hover {
+    transform: scale(1.05);
 }
 
 .logic-gate-label {
@@ -57,23 +70,52 @@
 }
 
 .logic-gate-input-terminal {
-    left: -5px;
+    left: -7px;
 }
 
 .logic-gate-output-terminal {
-    right: -5px;
+    right: -7px;
 }
 
 .logic-gate-terminal {
-    width: 10px;
-    height: 10px;
+    width: 15px;
+    height: 15px;
     z-index: 999;
-    background-color: rgba(255, 255, 255, 0.01);
-    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0%;
+    transition: border-radius 0.5s, opacity 0.5s;
+}
+
+.logic-gate-div-relative .logic-gate-terminal{
+    display: none;
+}
+
+.logic-gate-input-terminal .logic-gate-terminal {
+    
 }
 
 .logic-gate-terminal-on {
-    background-color: white;
+    /* background-color: white; */
+}
+
+.logic-gate-terminal-selected {
+    background-color: rgba(100, 255, 100, 0.5) !important;
+}
+
+.logic-gate-move-mode .logic-gate-terminal {
+    pointer-events: none;
+    opacity: 0;
+}
+
+.logic-gate-edit-mode-button {
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #aaa;
+    padding: 3px 10px;
+    border-radius: 5px 0px 0px 0px;
+    z-index: 1000;
 }
 
 @keyframes logic-gate-terminal-hover {
@@ -84,11 +126,28 @@
         outline: 3px solid red;
     }
 }
-.logic-gate-terminal:hover {
-    animation-name: logic-gate-terminal-hover;
-    animation-duration: 0.2s;
-    animation-direction: alternate-reverse;
-    animation-iteration-count: 10;
+
+
+@media (pointer: fine) {
+    .logic-gate-terminal:hover {
+        animation-name: logic-gate-terminal-hover;
+        animation-duration: 0.2s;
+        animation-direction: alternate-reverse;
+        animation-iteration-count: 10;
+        border-radius: 50%
+    }
+
+    .logic-gate-edit-mode-button {
+        display: none;
+    }
+}
+
+@media (pointer: coarse) {
+    .logic-gate-terminal{
+        width: 20px !important;
+        height: 20px !important;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
 }
 
 @keyframes logic-gate-terminal-connectable {
@@ -96,7 +155,7 @@
         outline: 2px solid black;
     }
     to {
-        outline: 2px solid white;
+        outline: 2px solid rgb(100, 255, 100);
     }
 }
 
@@ -137,6 +196,18 @@
 
 .logic-gate-body-active {
     cursor: move;
+}
+
+.logic-in-template, .logic-out-template {
+    background-color: #333;
+}
+
+.logic-in-template:has(.logic-gate-terminal-on) {
+    background-color: #555;
+}
+
+.logic-out-template:has(.logic-gate-terminal-on) {
+    background-color: #555;
 }
 
 @media (max-width: 600px) {

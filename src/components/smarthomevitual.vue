@@ -7,7 +7,8 @@ async function personCycleTest(callback) {
   let personElement = document.getElementById("living-room-person-1");
   const cycleEvery = 100;
   for (let tick = 0; tick < 1; tick += 1 / cycleEvery) {
-    await sleep(1000 / 30);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    // await sleep(1000 / 30);
     if (ended) {
       return;
     }
@@ -22,8 +23,16 @@ async function personCycleTest(callback) {
     let distances = [];
     for (let i = 0; i < sensorsElement.length; i++) {
       let sensorElement = sensorsElement[i];
-      let sensorOffset = $(sensorElement).offset();
-      let personOffset = $(personElement).offset();
+      // let sensorOffset = $(sensorElement).offset();
+      // let personOffset = $(personElement).offset();
+      let sensorOffset = {
+        left: parseFloat(sensorElement.style.left),
+        top: parseFloat(sensorElement.style.top)
+      }
+      let personOffset = {
+        left: parseFloat(personElement.style.left),
+        top: parseFloat(personElement.style.top)
+      }
       let dx = sensorOffset.left - personOffset.left;
       let dy = sensorOffset.top - personOffset.top;
       let distance = Math.sqrt(dx * dx + dy * dy);
@@ -56,6 +65,8 @@ function lightOff() {
 function addMotionSensor(x, y) {
   let livingRoom = document.querySelector(".living-room");
   let sensor = document.createElement("div");
+  console.log(livingRoom.style.width);
+  console.log(livingRoom.style.height);
   if (x < 0) {
     x += $(livingRoom).width();
     x -= 30;
@@ -120,6 +131,12 @@ defineExpose({
   flex-wrap: wrap;
 }
 
+@media (max-width: 500px) {
+  .module-container {
+    flex-direction: column;
+  }
+}
+
 .switch-container {
   display: flex;
   flex-direction: column;
@@ -146,6 +163,7 @@ defineExpose({
   margin: 0;
   overflow: hidden;
   /* transform: scale(2); */
+  flex-shrink: 0;
 }
 
 .living-room {

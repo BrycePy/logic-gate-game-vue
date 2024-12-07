@@ -22,6 +22,14 @@ class EventManager {
 		};
 		this.subscribe(event, temp);
 	}
+	onceMulti(events, callback, condition) {
+		let temp = data => {
+			if (condition && !condition(data)) return;
+			callback(data);
+			events.forEach(event => this.unsubscribe(event, temp));
+		};
+		events.forEach(event => this.subscribe(event, temp));
+	}
 	async wait(event, condition) {
 		return new Promise((resolve, reject) => {
 			this.once(event, resolve, condition);

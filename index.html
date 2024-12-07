@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta name="theme-color" content="#222">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -30,10 +33,9 @@
         }
       }
 
-      * {
+      /* * {
         outline: rgba(255,0,0,0.3) dotted 1px;
-        animation: blinkOutline 3s infinite;
-      }
+      } */
 
       html {
         font-family: "Parkinsans", sans-serif;
@@ -43,6 +45,7 @@
 
       body {
         min-width: 400px;
+        background-color: "#333";
       }
 
       #app {
@@ -72,7 +75,7 @@
         height: 100%;
         overflow: visible;
         animation: spin 300s linear infinite;
-        filter: blur(10px);
+        /* filter: blur(10px); */
         z-index: -1;
       }
 

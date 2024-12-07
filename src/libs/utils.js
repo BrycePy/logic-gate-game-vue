@@ -22,6 +22,9 @@ export { onBrowserBack };
 
 const _mountApp = async (app) => {
   app.mount("#app");
+  setTimeout(()=>{
+    zoomOutMobile();
+  }, 250)
 };
 
 const _unmountApp = async (app) => {
@@ -98,3 +101,14 @@ const setupLifecycleNotifier = (eventManager, data) => {
 }
 
 export { setupLifecycleNotifier };
+
+function zoomOutMobile() {
+  var viewport = document.querySelector('meta[name="viewport"]');
+
+  if ( viewport ) {
+    viewport.content = "initial-scale=0.1";
+    viewport.content = "width=500";
+  }
+}
+
+export { zoomOutMobile };

@@ -14,6 +14,7 @@ import { Modal } from 'bootstrap';
 import { createApp } from 'vue';
 
 const handleBack = ()=> {
+    console.log('back')
     hintCursor.clear();
     mountApp(WorldSelection);
 }
@@ -25,7 +26,7 @@ const getLevel = () => {
     urlLevelID = urlLevelID ? decodeURI(urlLevelID) : undefined;
     let callerLevelID = getCallerArgs();
     let levelID = urlLevelID || callerLevelID;
-    // console.log(callerLevelID, urlLevelID)
+    console.log(callerLevelID, urlLevelID)
     let level = idToLevel[levelID];
     if (!level) {
         mountApp(WorldSelection);
@@ -36,12 +37,36 @@ const getLevel = () => {
 
 const populateGateDeck = (logicCanvas)=>{
     let gateDeck = document.querySelector('.logic-gate-deck');
-    let gates = ['AND', 'OR', 'NOT', 'NAND', 'XOR'];
+    let gates = ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'NXOR'];
     gates.forEach(gate => {
         let gateDiv = logicCanvas.getGateTemplate(gate);
         let clone = gateDiv.cloneNode(true);
         clone.classList.add('gate-deck-item');
         gateDeck.appendChild(clone);
+        clone.addEventListener('click', async (e) => {
+            let gateObj = logicCanvas.createGate(gate);
+            let originalOffset = $(gateObj.domElement).offset();
+            let cloneOffset = $(clone).offset();
+            let gateObjOriginalTransition = gateObj.domElement.style.transition;
+            let gateObjOriginalZIndex = gateObj.domElement.style.zIndex;
+            let gateObjOriginalPointerEvents = gateObj.domElement.style.pointerEvents;
+            gateObj.domElement.style.zIndex = 1000;
+            gateObj.domElement.style.pointerEvents = 'none';
+            $(gateObj.domElement).offset(cloneOffset);
+            await sleep(30);
+            gateObj.domElement.style.transition = 'top 0.2s, left 0.2s, transform 0.2s, opacity 0.2s';
+            await sleep(30);
+            $(gateObj.domElement).offset(originalOffset);
+            await sleep(200);
+            gateObj.domElement.style.transition = gateObjOriginalTransition;
+            gateObj.domElement.style.zIndex = gateObjOriginalZIndex;
+            gateObj.domElement.style.pointerEvents = gateObjOriginalPointerEvents;
+        })
+        clone.draggable = true;
+        clone.ondragstart = (e) => {
+            console.log('drag start', e);
+            e.dataTransfer.setData('gate', gate);
+        }
     });
 }
 
@@ -62,41 +87,26 @@ onMounted(async () => {
     logicCanvas.startWorldTick(20);
 
     populateGateDeck(logicCanvas);
-    // populateGateDeck(logicCanvas);
+    logicCanvas.domElement.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    })
 
-    // console.log(level);
+    logicCanvas.domElement.addEventListener('drop', (e) => {
+        let gate = e.dataTransfer.getData('gate');
+        let rect = logicCanvas.domElement.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+        x -= 25;
+        y -= 25;
+        console.log(e);
+        logicCanvas.createGate(gate, x, y);
+    })
+
     challengeApp = createApp(level)
     setCallerArgs({
         logicCanvas,
     })
     challengeApp.mount('#challenge');
-
-    // let in1 = logicCanvas.createInput();
-    // let in2 = logicCanvas.createInput();
-    // let out1 = logicCanvas.createOutput();
-    // let andGate = logicCanvas.createGate('AND');
-
-    // hintCursor.setCanvas(logicCanvas);
-    // await hintCursor.addWire(in1.out(0), andGate.in(0));
-    // await hintCursor.addWire(in2.out(0), andGate.in(1));
-    // await hintCursor.addWire(andGate.out(0), out1.in(0));
-    // await sleep(1000);
-
-    // let submitBtn = document.getElementById('submit-btn');
-    // hintCursor.add({
-    //     element: submitBtn,
-    //     animation: 'click'
-    // });
-
-    // await new Promise((resolve) => {
-    //     submitBtn.addEventListener('click', () => {
-    //         hintCursor.next();
-    //         resolve();
-    //     }, { once: true });
-    // });
-
-    // modal = new Modal(document.getElementById('reviewPopup'));
-    // modal?.show();
 })
 
 onBeforeUnmount(() => {
@@ -109,6 +119,48 @@ onBeforeUnmount(() => {
 
     modal?.hide();
 })
+
+let undoState = null;
+const handleUndo = async() => {
+    if (!undoState) return;
+    logicCanvas.load(undoState);
+    undoState = null;
+    let undobtn = document.querySelector('.undo-btn');
+    undobtn.style.display = 'none';
+}
+
+const handleClear = async(e) => {
+    let clearbtn = document.querySelector('.clear-btn');
+    let undobtn = document.querySelector('.undo-btn');
+    clearbtn.disabled = true;
+
+    undoState = logicCanvas.export();
+    logicCanvas.world.nonIOGates.forEach(gate => {
+        gate.domElement.animate([
+            {opacity: 1},
+            {opacity: 0}
+        ], {duration: 200}).onfinish = () => {
+            gate.remove();
+        }
+    })
+    await sleep(200);
+    logicCanvas.world.wires.forEach((wire)=>{
+        wire.remove();
+    })
+    
+    await sleep(300);
+    clearbtn.disabled = false;
+    undobtn.style.display = 'block';
+
+    logicCanvas.eventManager.onceMulti(
+        ['GATE_CREATED', 'WIRE_CREATED', 'TERMINAL_STATE_CHANGED'],
+        () => {
+            let undoBtn = document.querySelector('.undo-btn');
+            undoBtn.style.display = 'none';
+        }
+    )
+}
+
 </script>
 
 <template>
@@ -121,7 +173,10 @@ onBeforeUnmount(() => {
     
         <div class="d-flex justify-content-center m-1 logic-canvas-container">
             <div class="logic-canvas-here"></div>
-            <div class="logic-gate-deck"></div>
+            <div class="logic-gate-deck">
+                <button class="btn btn-secondary clear-btn" @click="handleClear">Clear</button>
+                <button class="btn btn-secondary undo-btn" @click="handleUndo">Undo</button>
+            </div>
         </div>
 
         <div class="challenge-container">
@@ -176,20 +231,30 @@ onBeforeUnmount(() => {
 
 .logic-canvas-here {
     display: block;
-    width: 300px;
-    height: 300px;
+    width: 370px;
+    height: 370px;
 }
 
 .logic-gate-deck {
     gap: 0.5em;
     padding: 0.5em;
-
+    scale: 0.7;
     background-color: rgba(100, 100, 100, 0.2);
     border-radius: 1em;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
 
-    overflow-x: auto;
-    text-wrap: nowrap;
-    white-space: nowrap;
+.clear-btn {
+    order: 1;
+    margin-left: 2em;
+}
+
+.undo-btn {
+    order: 2;
+    display: none;
 }
 
 .gate-deck-item {

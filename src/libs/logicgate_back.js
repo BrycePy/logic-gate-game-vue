@@ -196,6 +196,9 @@ class Gate {
 	}
 
 	remove() {
+		if(this.terminals().some(t => t === this.world.previousTerminal)){
+			this.world.previousTerminal = null;
+		}
 		this.unlinkAll();
 		this.world.inputs = this.world.inputs.filter(g => g !== this);
 		this.world.outputs = this.world.outputs.filter(g => g !== this);
@@ -256,7 +259,11 @@ class World {
 	}
 
 	get numGate(){
-		return this.gates.length - this.inputs.length - this.outputs.length;
+		return this.nonIOGates.length;
+	}
+
+	get nonIOGates(){
+		return this.gates.filter(g => !this.inputs.includes(g) && !this.outputs.includes(g));
 	}
 
 	setDomElement(domElement) {
@@ -453,11 +460,7 @@ class World {
 	}
 
 	clearNonIO() {
-		this.gates.forEach(g => {
-			if (!this.inputs.includes(g) && !this.outputs.includes(g)) {
-				g.remove();
-			}
-		});
+		this.nonIOGates.forEach(g => g.remove());
 	}
 
 	clear() {
@@ -477,12 +480,14 @@ class World {
 	}
 }
 
-let functionSpecAND = new LogicGateFunctionSpec("AND", (a, b) => a && b, 2, 1);
-let functionSpecOR = new LogicGateFunctionSpec("OR", (a, b) => a || b, 2, 1);
 let functionSpecNOT = new LogicGateFunctionSpec("NOT", (a) => !a, 1, 1);
+let functionSpecAND = new LogicGateFunctionSpec("AND", (a, b) => a && b, 2, 1);
 let functionSpecNAND = new LogicGateFunctionSpec("NAND", (a, b) => !(a && b), 2, 1);
+let functionSpecOR = new LogicGateFunctionSpec("OR", (a, b) => a || b, 2, 1);
 let functionSpecNOR = new LogicGateFunctionSpec("NOR", (a, b) => !(a || b), 2, 1);
 let functionSpecXOR = new LogicGateFunctionSpec("XOR", (a, b) => (a || b) && !(a && b), 2, 1);
+let functionSpecNXOR = new LogicGateFunctionSpec("NXOR", (a, b) => !((a || b) && !(a && b)), 2, 1);
+
 let functionSpecIN = new LogicGateFunctionSpec("IN", () => { }, 0, 1);
 let functionSpecOUT = new LogicGateFunctionSpec("OUT", () => { }, 1, 0);
 
@@ -511,6 +516,10 @@ class FundamentalGate {
 		name: "XOR",
 		functionSpec: functionSpecXOR
 	};
+	static NXOR = {
+		name: "NXOR",
+		functionSpec: functionSpecNXOR
+	};
 	static IN = {
 		name: "IN",
 		functionSpec: functionSpecIN
@@ -520,7 +529,8 @@ class FundamentalGate {
 		functionSpec: functionSpecOUT
 	};
 	static isSpecFundamental(spec) {
-		return spec === functionSpecAND || spec === functionSpecOR || spec === functionSpecNOT || spec === functionSpecNAND || spec === functionSpecNOR || spec === functionSpecXOR || spec === functionSpecIN || spec === functionSpecOUT;
+		let typeList = Object.values(FundamentalGate);
+		return typeList.some(t => t?.functionSpec?.name === spec?.name);
 	}
 }
 

@@ -124,6 +124,27 @@ class LogicCanvas {
 				$(terminal.domElement).removeClass("logic-gate-terminal-on");
 			}
 		});
+
+		this.createEditModeButton()
+	}
+
+	createEditModeButton() {
+		let newDiv = document.createElement("div");
+		newDiv.classList.add("logic-gate-edit-mode-button");
+		newDiv.innerHTML = "Edit Mode: Wiring";
+		this.domElement.appendChild(newDiv);
+		
+		let moveMode = false;
+		newDiv.addEventListener("click", () => {
+			moveMode = !moveMode;
+			if (moveMode) {
+				newDiv.innerHTML = "Edit Mode: Moving";
+				$(this.domElement).addClass("logic-gate-move-mode");
+			} else {
+				newDiv.innerHTML = "Edit Mode: Wiring";
+				$(this.domElement).removeClass("logic-gate-move-mode");
+			}
+		});
 	}
 
 	updateCanvas(first) {
@@ -174,9 +195,13 @@ class LogicCanvas {
 
 	drawWires() {
 		let ctx = this.ctx;
+		let floatingTerminals = this.world.terminals.map(t => t);
 		this.world.wires.forEach(wire => {
 			let terminal1 = wire.terminalSrc;
 			let terminal2 = wire.terminalSink;
+
+			floatingTerminals = floatingTerminals.filter(t => t !== terminal1 && t !== terminal2);
+
 			let jqTerminal1 = $(terminal1.domElement);
 			let jqTerminal2 = $(terminal2.domElement);
 
@@ -189,9 +214,11 @@ class LogicCanvas {
 			sinkPos.left += jqTerminal2.width() / 2;
 
 			let xMid = (srcPos.left + sinkPos.left) / 2;
+			let yMid = (srcPos.top + sinkPos.top) / 2;
+			let xDiff = Math.abs(srcPos.left - sinkPos.left);
 
 			ctx.beginPath();
-			ctx.strokeStyle = wire.state === State.ON ? "white" : "black";
+			ctx.strokeStyle = wire.state === State.ON ? "white" : "#0096d2";
 			ctx.lineWidth = 2;
 
 			const drawCases = {
@@ -234,6 +261,12 @@ class LogicCanvas {
 					ctx.lineTo(xMid, sinkPos.top);
 					ctx.lineTo(sinkPos.left, sinkPos.top);
 				},
+				"default-steep": () => {
+					ctx.moveTo(srcPos.left, srcPos.top);
+					ctx.lineTo(srcPos.left+xDiff*0.3, srcPos.top);
+					ctx.lineTo(sinkPos.left-xDiff*0.3, sinkPos.top);
+					ctx.lineTo(sinkPos.left, sinkPos.top);
+				},
 				"default": () => {
 					ctx.moveTo(srcPos.left, srcPos.top);
 					ctx.lineTo(sinkPos.left, sinkPos.top);
@@ -250,13 +283,24 @@ class LogicCanvas {
 			} else if (dx < 50 && dy > 70) {
 				drawCases["src-right-of-sink"]();
 			} else {
-				drawCases["default"]();
+				let slope;
+				if(dx == 0){
+					slope = 999;
+				}else{
+					slope = Math.abs(dy / dx);
+				}
+				if (slope > 0.5) {
+					drawCases["default-steep"]();
+				}else{
+					drawCases["default-steep"]();
+					// drawCases["default"]();
+				}
 			}
 			ctx.stroke();
 		});
 
-		// if(!skipMouse && this.world.previousTerminal){
-		if(true && this.world.previousTerminal){
+		if(!skipMouse && this.world.previousTerminal){
+		// if(true && this.world.previousTerminal){
 			let terminal = this.world.previousTerminal;
 			let pos = calculateOffset(terminal.domElement, this.domElement);
 			let jqTerminal = $(terminal.domElement);
@@ -268,6 +312,23 @@ class LogicCanvas {
 			ctx.lineTo(this.mousePos.x, this.mousePos.y);
 			ctx.stroke();
 		}
+
+		floatingTerminals.forEach(terminal => {
+			let pos = calculateOffset(terminal.domElement, this.domElement);
+			let jqTerminal = $(terminal.domElement);
+			pos.top += jqTerminal.height() / 2;
+			pos.left += jqTerminal.width() / 2;
+			ctx.beginPath();
+			ctx.strokeStyle = "#0096d2";
+			ctx.lineWidth = 3;
+			ctx.moveTo(pos.left, pos.top);
+			if(terminal.isSource){
+				ctx.lineTo(pos.left + 15, pos.top);
+			}else{
+				ctx.lineTo(pos.left - 15, pos.top);
+			}
+			ctx.stroke();
+		});
 	}
 
 	drawIndicators() {
@@ -386,6 +447,7 @@ class LogicCanvas {
 		let selectedIsSource = selectedTerminal?.isSource;
 
 		if (selectedTerminal) {
+			selectedTerminal.domElement.classList.add("logic-gate-terminal-selected");
 			selectedTerminal.relatedTerminals.forEach(terminal => {
 				let jqTerminal = $(terminal.domElement);
 				jqTerminal.addClass("logic-gate-terminal-removeable");
@@ -405,6 +467,7 @@ class LogicCanvas {
 				let jqTerminal = $(terminal.domElement);
 				jqTerminal.removeClass("logic-gate-terminal-connectable");
 				jqTerminal.removeClass("logic-gate-terminal-removeable");
+				jqTerminal.removeClass("logic-gate-terminal-selected");
 			});
 		}
 	}
@@ -582,12 +645,13 @@ class LogicCanvas {
 	loadTemplate(id) {
 		let parentDom = $(`#${id}`)[0];
 		let class_name_mapping = {
-			AND: "logic-and-template",
-			OR: "logic-or-template",
 			NOT: "logic-not-template",
+			AND: "logic-and-template",
 			NAND: "logic-nand-template",
+			OR: "logic-or-template",
 			NOR: "logic-nor-template",
 			XOR: "logic-xor-template",
+			NXOR: "logic-nxor-template",
 			IN: "logic-in-template",
 			OUT: "logic-out-template",
 			WORLD: "logic-world-template"

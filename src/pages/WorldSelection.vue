@@ -39,10 +39,10 @@ const handlePlay = (level) => {
 </script>
 
 <template>
+    <div class="back-button">
+        <button class="btn btn-outline-secondary" @click="mountApp(MainMenu)">Back</button>
+    </div>
     <div class="app-inner">
-        <div class="back-button">
-            <button class="btn btn-outline-secondary" @click="mountApp(MainMenu)">Back</button>
-        </div>
     
         <img class="logo wsimg" src="/logowhite.png" />
     
@@ -79,6 +79,7 @@ const handlePlay = (level) => {
     top: 0;
     left: 0;
     padding: 1em;
+    z-index: 100;
 }
 
 .logo {
@@ -91,7 +92,7 @@ const handlePlay = (level) => {
 @media (min-width: 600px) {
     .logo {
         width: 500px;
-        margin-top: 2em;
+        /* margin-top: 2em; */
     }
 }
 
@@ -123,7 +124,6 @@ const handlePlay = (level) => {
     padding: 1em;
     border: 1px solid #666;
     border-radius: 1em;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     background-color: rgba(0, 0, 0, 0.5);
 }
 
