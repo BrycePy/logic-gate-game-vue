@@ -319,7 +319,7 @@ class LogicCanvas {
 			pos.top += jqTerminal.height() / 2;
 			pos.left += jqTerminal.width() / 2;
 			ctx.beginPath();
-			ctx.strokeStyle = "#0096d2";
+			ctx.strokeStyle = terminal.state? "white" : "#0096d2";
 			ctx.lineWidth = 3;
 			ctx.moveTo(pos.left, pos.top);
 			if(terminal.isSource){
@@ -334,16 +334,16 @@ class LogicCanvas {
 	drawIndicators() {
 		let ctx = this.ctx;
 		ctx.fillStyle = this.world.isStable() ? "#4f4" : "#f44";
-		ctx.fillRect(0, 0, 10, 10);
+		ctx.fillRect(0, 10, 10, 10);
 
 		ctx.fillStyle = this.world.tickCount % 2 === 0 ? "#fff" : "#ccc";
 		ctx.fillRect(10, 0, 10, 10);
 
-		ctx.fillStyle = this.world.previousTerminal ? "#fff" : "#ccc";
-		ctx.fillRect(20, 0, 10, 10);
+		// ctx.fillStyle = this.world.previousTerminal ? "#fff" : "#ccc";
+		// ctx.fillRect(20, 0, 10, 10);
 
-		ctx.fillStyle = skipMouse ? "#fff" : "#ccc";
-		ctx.fillRect(30, 0, 10, 10);
+		// ctx.fillStyle = skipMouse ? "#fff" : "#ccc";
+		// ctx.fillRect(30, 0, 10, 10);
 	}
 
 	createGateElement(template, functionSpec, x, y, draggable, removeable) {
@@ -651,7 +651,7 @@ class LogicCanvas {
 			OR: "logic-or-template",
 			NOR: "logic-nor-template",
 			XOR: "logic-xor-template",
-			NXOR: "logic-nxor-template",
+			XNOR: "logic-xnor-template",
 			IN: "logic-in-template",
 			OUT: "logic-out-template",
 			WORLD: "logic-world-template"

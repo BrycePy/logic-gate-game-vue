@@ -138,7 +138,6 @@ class CursorHint {
   }
 
   moveTo(element, duration) {
-    console.log("moveTo", element);
     this.setTransitionDuration(duration);
     this.setTarget(element);
     this.moveToTarget();

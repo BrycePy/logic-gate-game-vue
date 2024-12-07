@@ -78,9 +78,9 @@ let logicGateDefaultTemplate = `
     <div class="logic-gate-body"></div>
   </div>
 
-  <div class="logic-gate-div-relative logic-gate logic-gate-long logic-nxor-template">
+  <div class="logic-gate-div-relative logic-gate logic-gate-long logic-xnor-template">
     <span class="logic-gate-label"></span>
-    <img class="logic-gate-image" src="gate-nxor.png" alt="NXOR Gate" />
+    <img class="logic-gate-image" src="gate-xnor.png" alt="XNOR Gate" />
     <div class="logic-gate-input-terminal logic-gate-terminal-container">
       <div class="logic-gate-terminal"></div>
       <div class="logic-gate-terminal"></div>

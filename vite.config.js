@@ -8,8 +8,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   base: '/logic-gate-game-vue/',
   plugins: [
-    vue({ template: { compilerOptions: { hoistStatic: false } } }),
-    // vue(),
+    // vue({ template: { compilerOptions: { hoistStatic: false } } }),
+    vue(),
     // vueDevTools(),
   ],
   resolve: {

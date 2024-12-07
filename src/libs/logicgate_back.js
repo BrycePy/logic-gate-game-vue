@@ -486,7 +486,7 @@ let functionSpecNAND = new LogicGateFunctionSpec("NAND", (a, b) => !(a && b), 2,
 let functionSpecOR = new LogicGateFunctionSpec("OR", (a, b) => a || b, 2, 1);
 let functionSpecNOR = new LogicGateFunctionSpec("NOR", (a, b) => !(a || b), 2, 1);
 let functionSpecXOR = new LogicGateFunctionSpec("XOR", (a, b) => (a || b) && !(a && b), 2, 1);
-let functionSpecNXOR = new LogicGateFunctionSpec("NXOR", (a, b) => !((a || b) && !(a && b)), 2, 1);
+let functionSpecXNOR = new LogicGateFunctionSpec("XNOR", (a, b) => !((a || b) && !(a && b)), 2, 1);
 
 let functionSpecIN = new LogicGateFunctionSpec("IN", () => { }, 0, 1);
 let functionSpecOUT = new LogicGateFunctionSpec("OUT", () => { }, 1, 0);
@@ -516,9 +516,9 @@ class FundamentalGate {
 		name: "XOR",
 		functionSpec: functionSpecXOR
 	};
-	static NXOR = {
-		name: "NXOR",
-		functionSpec: functionSpecNXOR
+	static XNOR = {
+		name: "XNOR",
+		functionSpec: functionSpecXNOR
 	};
 	static IN = {
 		name: "IN",

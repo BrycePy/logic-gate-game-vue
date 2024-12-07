@@ -1,6 +1,5 @@
 <script setup>
 import 'bootstrap/dist/css/bootstrap.css'
-import '../assets/main.css';
 import { onMounted } from 'vue';
 import { mountApp, getCallerArgs } from '../libs/utils';
 import WorldSelection from '../pages/WorldSelection.vue';
@@ -38,12 +37,23 @@ header {
 
 .logo {
     display: block;
-    width: 300px;
+    /* width: 450px; */
+    max-width: 1000px;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
 }
 
-@media (min-width: 600px) {
+.app-inner {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0;
+}
+
+/* @media (min-width: 600px) {
     .logo {
         width: 500px;
     }
@@ -53,13 +63,7 @@ header {
     .logo {
         width: 800px;
     }
-
-    header .wrapper {
-        display: flex;
-        place-items: flex-start;
-        flex-wrap: wrap;
-    }
-}
+} */
 
 .start-btn {
     position: relative;

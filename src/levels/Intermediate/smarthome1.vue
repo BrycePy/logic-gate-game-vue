@@ -1,60 +1,86 @@
 <script>
 import { setCallerArgs, getCallerArgs } from '@/libs/utils';
-import { onMounted, useTemplateRef } from 'vue';
+import { inject, onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
 import smarthomevitual from '@/components/smarthomevitual.vue';
 
-const name = 'Smart Home 1';
-const description = 'test';
+const name = 'Smart Home Dev';
+const description = 'For Testing Smart Home Levels';
+const availableGates = ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'];
 
 export default {
     name,
     description,
+    availableGates,
     data() {
-        return { name, description };
+        return { name, description, availableGates };
     }
 }
 
 </script>
 <script setup>
 
-let context = getCallerArgs();
-let logicCanvas = context.logicCanvas;
-// console.log(context);
-
+let logicCanvas = inject('logicCanvas');
 let smvitual = useTemplateRef('smvitual');
+
+const onTerminalStateChanged = (terminal) => {
+    let world = logicCanvas.world;
+    if (terminal == world.outputs[0].in(0)) {
+        if (terminal.getState()) {
+            smvitual.value.lightOn();
+        } else {
+            smvitual.value.lightOff();
+        }
+    }
+}
 
 // smvitual.personCycleTest()
 onMounted(async () => {
     // requestAnimationFrame(()=>{})
     let sim = smvitual.value;
     sim.addMotionSensor(10, 10);
-    sim.addMotionSensor(-10, 10);
-    sim.addSwitch("Motion");
-    sim.addSwitch("Light");
+    // sim.addMotionSensor(-10, 10);
+    sim.addMotionSensor(10, -10);
+    sim.addSwitch("Test1");
+    sim.addSwitch("Test2");
 
 
-    logicCanvas.createInput();
-    logicCanvas.createInput();
-    logicCanvas.createInput();
-    logicCanvas.createOutput();
-    logicCanvas.createOutput();
+    logicCanvas.createInput().setLabel('M1');
+    logicCanvas.createInput().setLabel('M2');
+    logicCanvas.createOutput().setLabel('Light');
     logicCanvas.createGate('AND', 100, 100);
 
+    logicCanvas.eventManager.subscribe('TERMINAL_STATE_CHANGED', onTerminalStateChanged);
+})
+
+onBeforeUnmount(()=>{
+    logicCanvas.eventManager.unsubscribe('TERMINAL_STATE_CHANGED', onTerminalStateChanged);
 })
 
 
-const onSubmit = async()=>{
+const onSubmit = async () => {
     $('#submit-btn').prop('disabled', true);
-    await smvitual.value.personCycleTest((data)=>{
-        // console.log('callback', data);
-        if (data.distances.some(d => d < 450/2)) {
-            smvitual.value.lightOn();
-        } else {
-            smvitual.value.lightOff();
-        }
+    await smvitual.value.personCycleTest((data) => {
+        // // console.log('callback', data);
+        // if (data.distances.some(d => d < 450/2)) {
+        //     smvitual.value.lightOn();
+        // } else {
+        //     smvitual.value.lightOff();
+        // }
+
+        data.distances.forEach((d, i) => {
+            if (d < 450 / 2) {
+                logicCanvas.world.inputs[i].out(0).setState(true);
+            } else {
+                logicCanvas.world.inputs[i].out(0).setState(false);
+            }
+        })
     })
     $('#submit-btn').prop('disabled', false);
 }
+
+defineExpose({
+    onSubmit,
+})
 
 </script>
 
@@ -64,24 +90,17 @@ const onSubmit = async()=>{
         <p class="challenge-description">Description</p>
 
         <div class="mobile-scale">
-            <smarthomevitual ref="smvitual"/>
-        </div>
-
-        <div class="challenge-buttons">
-            <button class="btn btn-primary">Reset</button>
-            <button class="btn btn-primary" id="submit-btn" @click="onSubmit">Submit</button>
+            <smarthomevitual ref="smvitual" />
         </div>
     </div>
 </template>
 
 <style scoped>
-
 @media screen and (max-width: 500px) {
     .mobile-scale {
         width: calc(400px * 0.7);
         transform-origin: 0 0;
         transform: scale(0.7);
-    }   
+    }
 }
-
 </style>

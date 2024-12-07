@@ -107,6 +107,7 @@ const handlePlay = (level) => {
     display: flex;
     flex-direction: column;
     row-gap: 2em;
+    padding-bottom: 5em;
 }
 
 .star {

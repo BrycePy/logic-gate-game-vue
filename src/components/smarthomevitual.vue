@@ -7,8 +7,8 @@ async function personCycleTest(callback) {
   let personElement = document.getElementById("living-room-person-1");
   const cycleEvery = 100;
   for (let tick = 0; tick < 1; tick += 1 / cycleEvery) {
+    await sleep(1000 / 40);
     await new Promise((resolve) => requestAnimationFrame(resolve));
-    // await sleep(1000 / 30);
     if (ended) {
       return;
     }
@@ -65,8 +65,6 @@ function lightOff() {
 function addMotionSensor(x, y) {
   let livingRoom = document.querySelector(".living-room");
   let sensor = document.createElement("div");
-  console.log(livingRoom.style.width);
-  console.log(livingRoom.style.height);
   if (x < 0) {
     x += $(livingRoom).width();
     x -= 30;

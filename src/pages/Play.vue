@@ -10,6 +10,8 @@ import { World } from '@/libs/logicgate_back';
 import { hintCursor } from '@/main';
 import { sleep } from '../libs/utils';
 import { Modal } from 'bootstrap';
+import { inject } from 'vue'
+import { useTemplateRef } from 'vue';
 
 import { createApp } from 'vue';
 
@@ -26,7 +28,7 @@ const getLevel = () => {
     urlLevelID = urlLevelID ? decodeURI(urlLevelID) : undefined;
     let callerLevelID = getCallerArgs();
     let levelID = urlLevelID || callerLevelID;
-    console.log(callerLevelID, urlLevelID)
+    // console.log(callerLevelID, urlLevelID)
     let level = idToLevel[levelID];
     if (!level) {
         mountApp(WorldSelection);
@@ -35,9 +37,8 @@ const getLevel = () => {
     return level;
 }
 
-const populateGateDeck = (logicCanvas)=>{
+const populateGateDeck = (logicCanvas, gates)=>{
     let gateDeck = document.querySelector('.logic-gate-deck');
-    let gates = ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'NXOR'];
     gates.forEach(gate => {
         let gateDiv = logicCanvas.getGateTemplate(gate);
         let clone = gateDiv.cloneNode(true);
@@ -64,16 +65,30 @@ const populateGateDeck = (logicCanvas)=>{
         })
         clone.draggable = true;
         clone.ondragstart = (e) => {
-            console.log('drag start', e);
             e.dataTransfer.setData('gate', gate);
         }
     });
+
+    logicCanvas.domElement.ondragover = (e) => {
+        e.preventDefault();
+    }
+
+    logicCanvas.domElement.ondrop = (e) => {
+        let gate = e.dataTransfer.getData('gate');
+        let rect = logicCanvas.domElement.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+        x -= 25;
+        y -= 25;
+        logicCanvas.createGate(gate, x, y);
+    }
 }
 
 let logicCanvas, modal;
 let challengeApp;
+let level = getLevel();
+
 onMounted(async () => {
-    let level = getLevel();
     if (!level) return;
 
     let urlUpToHash = window.location.href.split('#')[0];
@@ -85,27 +100,15 @@ onMounted(async () => {
     logicCanvas = new LogicCanvas(world, targetDiv);
     logicCanvas.startVisualTick();
     logicCanvas.startWorldTick(20);
+    logicCanvas.world.enableAutoSleep();
 
-    populateGateDeck(logicCanvas);
-    logicCanvas.domElement.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    })
+    populateGateDeck(logicCanvas, level.availableGates || [
+        'AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR'
+    ]);
 
-    logicCanvas.domElement.addEventListener('drop', (e) => {
-        let gate = e.dataTransfer.getData('gate');
-        let rect = logicCanvas.domElement.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-        x -= 25;
-        y -= 25;
-        console.log(e);
-        logicCanvas.createGate(gate, x, y);
-    })
 
-    challengeApp = createApp(level)
-    setCallerArgs({
-        logicCanvas,
-    })
+    challengeApp = createApp(level);
+    challengeApp.provide('logicCanvas', logicCanvas);
     challengeApp.mount('#challenge');
 })
 
@@ -161,6 +164,14 @@ const handleClear = async(e) => {
     )
 }
 
+
+const test = useTemplateRef('test');
+
+const onSubmit = async()=>{
+    let ref = test.value._vnode.component.exposed;
+    console.log('submit', ref.onSubmit())
+}
+
 </script>
 
 <template>
@@ -177,10 +188,11 @@ const handleClear = async(e) => {
                 <button class="btn btn-secondary clear-btn" @click="handleClear">Clear</button>
                 <button class="btn btn-secondary undo-btn" @click="handleUndo">Undo</button>
             </div>
+            <button class="btn btn-primary mt-0 mb-2" id="submit-btn" @click="onSubmit">Submit</button>
         </div>
 
         <div class="challenge-container">
-            <div id="challenge"></div>
+            <div id="challenge" ref="test"></div>
         </div>
     </div>
 
@@ -226,13 +238,15 @@ const handleClear = async(e) => {
     flex-direction: column;
     /* justify-content: center; */
     align-items: center;
-    gap: 1em;
+    /* gap: 1em; */
 }
 
 .logic-canvas-here {
     display: block;
     width: 370px;
     height: 370px;
+    border-radius: 2em;
+    overflow: hidden;
 }
 
 .logic-gate-deck {
@@ -291,7 +305,7 @@ const handleClear = async(e) => {
     width: 100%;
     max-width: 1800px;
     margin: 1em;
-    padding: 2em;
+    padding: 0;
     padding-top: 5em;
     gap: 2em;
     font-weight: normal;
