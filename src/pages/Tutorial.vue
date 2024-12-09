@@ -9,6 +9,9 @@ import { World } from '@/libs/logicgate_back';
 import { hintCursor } from '@/main';
 import { FundamentalGate } from '@/libs/logicgate_back';
 import { populateGateDeck } from './Play.vue';
+import userData from '@/UserData';
+import { idToLevel } from '@/levels/levels';
+import Tutorial from './Tutorial.vue';
 
 const handleBack = () => {
     console.log('back')
@@ -16,8 +19,16 @@ const handleBack = () => {
     mountApp(WorldSelection);
 }
 
-onBrowserBack(handleBack)
+let level;
+Object.keys(idToLevel).forEach(id => {
+    let current = idToLevel[id];
+    if (current.goToPage == Tutorial){
+        level = current;
+    }
+});
+console.log('level', level)
 
+onBrowserBack(handleBack)
 
 let logicCanvases = [];
 let highlightUpdateInterval = null;
@@ -41,7 +52,6 @@ onMounted(async () => {
         logicCanvas.world.enableAutoSleep()
 
         let functionSpec = FundamentalGate[gateType].functionSpec;
-        console.log(functionSpec);
 
         for (let i = 0; i < functionSpec.inputCount; i++) {
             logicCanvas.createInput().setLabel(['A', 'B', 'C', 'D'][i]);
@@ -169,6 +179,8 @@ onMounted(async () => {
         highlight(mechCompleteDiv);
         mechCompleteDiv.style.opacity = 1;
         skipBtn.style.display = 'none';
+
+        userData.setAttempt(level.id, "stars", [true, true, true]);
     }
 
 })

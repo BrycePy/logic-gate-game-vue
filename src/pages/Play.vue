@@ -63,7 +63,7 @@ export { populateGateDeck };
 <script setup>
 import 'bootstrap/dist/css/bootstrap.css'
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { mountApp, getCallerArgs, setCallerArgs } from '../libs/utils';
+import { mountApp, getCallerArgs, setCallerArgs, timeStrFromSeconds } from '../libs/utils';
 import WorldSelection from './WorldSelection.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
@@ -76,10 +76,11 @@ import { useTemplateRef } from 'vue';
 import { createApp } from 'vue';
 import { TruthTableLevel } from '@/levels/levelbase';
 import truthtableleveltemplate from '@/components/truthtableleveltemplate.vue';
+import Play from './Play.vue';
+import userData from '@/UserData';
 
 const handleBack = () => {
     console.log('back')
-    $("#reviewPopup").modal('hide');
     hintCursor.clear();
     mountApp(WorldSelection);
 }
@@ -113,6 +114,19 @@ let resultModalData = ref([
     {star: true, text: 'Time'},
     {star: false, text: '# of Gates'},
 ])
+
+const startTimer = ()=>{
+    levelTimerEndAt = undefined;
+    clearInterval(levelTimerInterval);
+    levelTimerStartAt = Date.now();
+    levelTimerInterval = setInterval(() => {
+        let time = (Date.now() - levelTimerStartAt) / 1000;
+        let userTimeStr = timeStrFromSeconds(time);
+        let timeLimitStr = level.timeLimit ? timeStrFromSeconds(level.timeLimit) : '∞';
+        let timer = document.querySelector('.level-timer');
+        timer.innerText = `${userTimeStr} / ${timeLimitStr}`;
+    }, 1000);
+}
 
 onMounted(async () => {
     if (!level) return;
@@ -163,31 +177,26 @@ onMounted(async () => {
         challengeApp.mount('#challenge');
     }
 
-    levelTimerStartAt = Date.now();
-    levelTimerInterval = setInterval(() => {
-        let time = Date.now() - levelTimerStartAt;
-        let minutes = Math.floor(time / 60000);
-        let seconds = Math.floor((time % 60000) / 1000);
-        let timer = document.querySelector('.level-timer');
-        let currentTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        let timeLimitString;
-        if (level.timeLimit) {
-            let tl = level.timeLimit;
-            let tlMinutes = Math.floor(tl / 60);
-            let tlSeconds = tl % 60;
-            timeLimitString = `${tlMinutes}:${tlSeconds.toString().padStart(2, '0')}`;
-        } else {
-            timeLimitString = '∞';
-        }
-        timer.innerText = `${currentTime} / ${timeLimitString}`;
-    }, 1000);
+    startTimer();
 
-    setTimeout(() => {
-        level?.onCreated(logicCanvas);
-    }, 200)
+    if(level.onCreated){
+        setTimeout(() => {
+            level.onCreated(logicCanvas);
+        }, 200)
+    }
+    let userAttemptCanvas = userData.getAttempt(level.id, 'canvas');
+    let userAttemptTime = userData.getAttempt(level.id, 'time');
+    if(userAttemptCanvas){
+        setTimeout(() => {
+            logicCanvas.load(userAttemptCanvas);
+            levelTimerStartAt = Date.now() - userAttemptTime * 1000;
+            clearInterval(levelTimerInterval);
+        }, 500)
+    }
 })
 
 onBeforeUnmount(() => {
+    $("#reviewPopup").modal('hide');
     clearInterval(levelTimerInterval);
     intersectionObserver?.disconnect();
     logicCanvas?.remove();
@@ -242,23 +251,55 @@ const test = useTemplateRef('test');
 
 const onSubmit = async () => {
     let ref = test.value._vnode.component.exposed;
-    let result = await ref.onSubmit();
-    if (result) {
-        levelTimerEndAt = Date.now();
+    let solved = await ref.onSubmit();
+    if (solved) {
+        if(!levelTimerEndAt){
+            levelTimerEndAt = Date.now();
+        }
         clearInterval(levelTimerInterval);
 
         resultModalData.value[0].star = false;
         resultModalData.value[1].star = false;
         resultModalData.value[2].star = false;
+
+        let timeUser = Math.floor((levelTimerEndAt - levelTimerStartAt) / 1000);
+        let timeUserStr = timeStrFromSeconds(timeUser);
+        let timeLimitStr = level.timeLimit ? timeStrFromSeconds(level.timeLimit) : '∞';
+        resultModalData.value[1].text = `Time: ${timeUserStr} / ${timeLimitStr}`;
+        let timeStar = level.timeLimit ? timeUser <= level.timeLimit : true;
+
+        let gateCount = logicCanvas.world.nonIOGates.length;
+        let gateLimit = level.maxGateCount || "∞";
+        resultModalData.value[2].text = `# of Gates: ${gateCount} / ${gateLimit}`;
+        let gateStar = level.maxGateCount ? gateCount <= level.maxGateCount : true;
+
+        userData.setAttempt(level.id, "stars", [true, timeStar, gateStar]);
+        userData.setAttempt(level.id, "time", timeUser);
+        userData.setAttempt(level.id, "canvas", logicCanvas.export());
+
         $("#reviewPopup").modal('show');
         await sleep(200);
         resultModalData.value[0].star = true;
         await sleep(200);
-        resultModalData.value[1].star = true;
+        resultModalData.value[1].star = timeStar;
         await sleep(200);
-        resultModalData.value[2].star = true;
+        resultModalData.value[2].star = gateStar;
 
     }
+}
+
+const handleRestart = ()=>{
+    $("#reviewPopup").modal('hide');
+    logicCanvas.world.clearNonIO();
+    startTimer();
+}
+
+const handleNextLevel = async()=>{
+    let nextLevel = level.next;
+    await sleep(500)
+    handleBack();
+    await sleep(500)
+    mountApp(Play, nextLevel.id);
 }
 
 </script>
@@ -322,8 +363,8 @@ const onSubmit = async () => {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" @click="handleBack">World Selection</button>
-                        <button type="button" class="btn btn-primary">Restart</button>
-                        <button type="button" class="btn btn-primary">Next Level</button>
+                        <button type="button" class="btn btn-primary" @click="handleRestart">Restart</button>
+                        <button type="button" class="btn btn-primary" @click="handleNextLevel">Next Level</button>
                     </div>
                 </div>
             </div>
@@ -371,7 +412,7 @@ const onSubmit = async () => {
 }
 
 .result-star-fill {
-    animation: stamp 0.5s;
+    animation: stamp 1s;
 }
 
 :global(.gate-deck-item-container) {

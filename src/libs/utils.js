@@ -112,3 +112,11 @@ function zoomOutMobile() {
 }
 
 export { zoomOutMobile };
+
+function timeStrFromSeconds(seconds) {
+  let minutes = Math.floor(seconds / 60);
+  let secs = Math.floor(seconds % 60);
+  return `${minutes}:${secs.toString().padStart(2, '0')}`
+}
+
+export { timeStrFromSeconds };

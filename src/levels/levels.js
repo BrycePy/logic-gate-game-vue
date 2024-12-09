@@ -36,15 +36,25 @@ const worlds = [
 ]
 
 const idToLevel = {};
+let previousLevel;
 worlds.forEach(world => {
     world.levels.forEach(level => {
         let id = `${world.name}.${level.name}`;
         level["world"] = world;
         level.id = id;
         idToLevel[id] = level;
+        if (previousLevel) {
+            previousLevel.next = level;
+            level.previous = previousLevel;
+        }
+        previousLevel = level;
     });
 });
 
+const levelToId = {};
+Object.keys(idToLevel).forEach(id => {
+    levelToId[idToLevel[id]] = id;
+});
 
 export default worlds;
 

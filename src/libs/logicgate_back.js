@@ -468,6 +468,7 @@ class World {
 	}
 
 	clearNonIO() {
+		this.wires.forEach(w => w.remove());
 		this.nonIOGates.forEach(g => g.remove());
 	}
 

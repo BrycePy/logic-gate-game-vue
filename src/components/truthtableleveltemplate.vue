@@ -14,11 +14,6 @@ const outputs = data.outputs;
 const tableHeader = [...inputs, ...outputs]
 const actualOutputs = ref(data.truthTable.map(testCase => [...testCase.outputs]));
 
-console.log(actualOutputs);
-console.log(logicCanvas);
-console.log(data);
-
-
 onMounted(() => {
     logicCanvas.clear();
     data.inputs.forEach(input => {
@@ -95,8 +90,8 @@ defineExpose({
 </script>
 
 <template>
-
     <p>{{ data.description }}</p>
+    <data.template v-if="data.template" />
     <div class="test-case-table-container">
         <table class="table table-dark table-hover text-center table-striped table-test-case">
             <thead>

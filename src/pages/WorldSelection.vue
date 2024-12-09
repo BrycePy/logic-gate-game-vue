@@ -9,6 +9,7 @@ import Play from '../pages/Play.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
 import { hintCursor } from '@/main';
+import userData from '@/UserData';
 
 onBrowserBack(()=>{
     mountApp(MainMenu);
@@ -19,12 +20,14 @@ onMounted(() => {
     let newUrl = urlUpToHash + '#world-selection';
     window.history.pushState({}, '', newUrl);
 
-    const startBtn = $('.go-to-play')[0];
-    hintCursor.clear();
-    hintCursor.add({
-        element: startBtn,
-        animation: 'click'
-    });
+    if(!userData.getAttempt('Basic.Tutorial', 'stars')){
+        const startBtn = $('.go-to-play')[0];
+        hintCursor.clear();
+        hintCursor.add({
+            element: startBtn,
+            animation: 'click'
+        });
+    }
 })
 
 onBeforeUnmount(()=>{
@@ -60,9 +63,10 @@ const handlePlay = (level) => {
                             <div class="card-body">
                                 <h5 class="card-title">{{ level.name }}
                                     <div class="star-container">
-                                        <img src="../assets/star-fill.svg" alt="star" class="star wsimg" />
-                                        <img src="../assets/star-fill.svg" alt="star" class="star wsimg" />
-                                        <img src="../assets/star.svg" alt="star" class="star wsimg" />
+                                        <div v-for="star in (userData.getAttempt(level.id, 'stars') || [false, false, false])">
+                                            <img v-if="star" src="../assets/star-fill.svg" alt="star" class="star result-star result-star-fill" />
+                                            <img v-else src="../assets/star.svg" alt="star" class="star result-star" />
+                                        </div>
                                     </div>
                                 </h5>
                                 <p class="card-text">{{ level.description }}</p>
@@ -127,9 +131,11 @@ const handlePlay = (level) => {
 }
 
 .star-container {
-    display: inline-block;
+    display: flex;
     position: absolute;
     right: 1em;
+    top: 0.6em;
+    gap: 0.2em;
 }
 
 .world {

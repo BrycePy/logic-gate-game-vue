@@ -1,4 +1,5 @@
 import { TruthTableLevel } from "../levelbase";
+import TestTemplate from "./testTemplate.vue";
 
 const nothingLevel = new TruthTableLevel({
     name: "Nothing",
@@ -23,7 +24,8 @@ const nothingLevel = new TruthTableLevel({
         console.log(in1, out1);
         world.makeConnection(in1.out(0))
         world.makeConnection(out1.in(0))
-    }
+    },
+    template: TestTemplate,
 })
 
 export default nothingLevel;
