@@ -10,6 +10,7 @@ import { LogicCanvasHint } from "./libs/hintcursor";
 import worlds from "./levels/levels";
 import "@/libs/jquery.ui.touch-punch.min.js";
 import "drag-drop-touch";
+import userData from "./UserData";
 
 const mainEventManager = new EventManager();
 export { mainEventManager as eventManager };
@@ -64,7 +65,7 @@ showWireframeBtn.style.position = "fixed";
 showWireframeBtn.style.bottom = "10px";
 showWireframeBtn.style.right = "10px";
 showWireframeBtn.style.zIndex = "100";
-showWireframeBtn.style.opacity = "0.2";
+showWireframeBtn.style.opacity = "0.1";
 showWireframeBtn.addEventListener("click", () => {
   let newStyle = document.createElement("style");
   newStyle.innerHTML = `
@@ -76,6 +77,18 @@ showWireframeBtn.addEventListener("click", () => {
   showWireframeBtn.remove();
 });
 document.body.appendChild(showWireframeBtn);
+
+let clearUserDataBtn = document.createElement("button");
+clearUserDataBtn.innerHTML = "Clear User Data";
+clearUserDataBtn.style.position = "fixed";
+clearUserDataBtn.style.bottom = "10px";
+clearUserDataBtn.style.left = "10px";
+clearUserDataBtn.style.zIndex = "100";
+clearUserDataBtn.style.opacity = "0.1";
+clearUserDataBtn.addEventListener("click", () => {
+  userData.clear();
+});
+document.body.appendChild(clearUserDataBtn);
 
 // window.addEventListener("dblclick", () => {
 //   let newStyle = document.createElement("style");

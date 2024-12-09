@@ -1,18 +1,7 @@
 import smarthome1 from "./Intermediate/smarthome1.vue";
 import Tutorial from "@/pages/Tutorial.vue";
-
-class LevelBase {
-    constructor(name, description) {
-        this.name = name;
-        this.description = description
-    }
-
-    onMounted() {
-    }
-
-    onSubmit() {
-    }
-}
+import andLevel from "./basic/letsmakenand1";
+import nothingLevel from "./basic/nothing";
 
 // name: 'Tutorial',
 // description: 'Learn the basics of logic gates and game mechanics',
@@ -20,9 +9,8 @@ class LevelBase {
 const worlds = [
     {name: "Basic", description: "Basic level", levels: [
         {name: "Tutorial", description: "Learn the basics of logic gates and game mechanics", goToPage: Tutorial},
-        {name: "Level 1", description: "Level 1Level 1Level 1Level 1Level 1Level 1Level 1"},
-        {name: "Level 2", description: "Level 2Level 2Level 2Level 2Level 2Level 2Level 2"},
-        {name: "Level 3", description: "Level 3Level 3Level 3Level 3Level 3Level 3Level 3"},
+        andLevel,
+        nothingLevel
     ]},
     {name: "Intermediate", description: "Intermediate level", levels: [
         smarthome1
@@ -60,5 +48,5 @@ worlds.forEach(world => {
 
 export default worlds;
 
-export { idToLevel, LevelBase };
+export { idToLevel };
 

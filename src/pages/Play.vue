@@ -57,12 +57,12 @@ const populateGateDeck = (logicCanvas, gates) => {
         logicCanvas.createGate(gate, x, y);
     }
 }
-export {populateGateDeck};
+export { populateGateDeck };
 </script>
 
 <script setup>
 import 'bootstrap/dist/css/bootstrap.css'
-import { onBeforeUnmount, onMounted } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { mountApp, getCallerArgs, setCallerArgs } from '../libs/utils';
 import WorldSelection from './WorldSelection.vue';
 import { onBrowserBack } from '@/libs/utils';
@@ -74,9 +74,12 @@ import { sleep } from '../libs/utils';
 import { useTemplateRef } from 'vue';
 
 import { createApp } from 'vue';
+import { TruthTableLevel } from '@/levels/levelbase';
+import truthtableleveltemplate from '@/components/truthtableleveltemplate.vue';
 
 const handleBack = () => {
     console.log('back')
+    $("#reviewPopup").modal('hide');
     hintCursor.clear();
     mountApp(WorldSelection);
 }
@@ -101,6 +104,15 @@ let logicCanvas, modal;
 let challengeApp;
 let level = getLevel();
 let intersectionObserver;
+let levelTimerInterval;
+let levelTimerStartAt;
+let levelTimerEndAt;
+
+let resultModalData = ref([
+    {star: true, text: 'Level Solved!'},
+    {star: true, text: 'Time'},
+    {star: false, text: '# of Gates'},
+])
 
 onMounted(async () => {
     if (!level) return;
@@ -109,19 +121,19 @@ onMounted(async () => {
     let newUrl = urlUpToHash + `#play?${level.id}`;
     window.history.pushState({}, '', newUrl);
 
-    if(!level.hideCanvas) {
+    if (!level.hideCanvas) {
         let targetDiv = document.querySelector('.logic-canvas-here');
         let world = new World();
         logicCanvas = new LogicCanvas(world, targetDiv);
         logicCanvas.startVisualTick();
         logicCanvas.startWorldTick(20);
         logicCanvas.world.enableAutoSleep();
-    
+
         populateGateDeck(logicCanvas, level.availableGates || [
             'AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR'
         ]);
         const el = document.querySelector(".logic-canvas-container")
-        const threshold = 0.9;
+        const threshold = 0.95;
         const observer = new IntersectionObserver(
             ([e]) => {
                 let state = e.intersectionRatio < threshold && e.boundingClientRect.y <= 10;
@@ -131,20 +143,52 @@ onMounted(async () => {
         );
         observer.observe(el);
         intersectionObserver = observer;
-    
-        if(el.getBoundingClientRect().top <= 10) {
+
+        if (el.getBoundingClientRect().top <= 10) {
             el.classList.add("is-pinned");
-        } 
-    
+        }
+
         $('[data-toggle="tooltip"]').tooltip();
     }
 
-    challengeApp = createApp(level);
-    challengeApp.provide('logicCanvas', logicCanvas);
-    challengeApp.mount('#challenge');
+    if (level instanceof TruthTableLevel) {
+        console.log(level)
+        challengeApp = createApp(truthtableleveltemplate);
+        challengeApp.provide('logicCanvas', logicCanvas);
+        challengeApp.provide('truthTableLevelData', level);
+        challengeApp.mount('#challenge');
+    } else {
+        challengeApp = createApp(level);
+        challengeApp.provide('logicCanvas', logicCanvas);
+        challengeApp.mount('#challenge');
+    }
+
+    levelTimerStartAt = Date.now();
+    levelTimerInterval = setInterval(() => {
+        let time = Date.now() - levelTimerStartAt;
+        let minutes = Math.floor(time / 60000);
+        let seconds = Math.floor((time % 60000) / 1000);
+        let timer = document.querySelector('.level-timer');
+        let currentTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        let timeLimitString;
+        if (level.timeLimit) {
+            let tl = level.timeLimit;
+            let tlMinutes = Math.floor(tl / 60);
+            let tlSeconds = tl % 60;
+            timeLimitString = `${tlMinutes}:${tlSeconds.toString().padStart(2, '0')}`;
+        } else {
+            timeLimitString = '∞';
+        }
+        timer.innerText = `${currentTime} / ${timeLimitString}`;
+    }, 1000);
+
+    setTimeout(() => {
+        level?.onCreated(logicCanvas);
+    }, 200)
 })
 
 onBeforeUnmount(() => {
+    clearInterval(levelTimerInterval);
     intersectionObserver?.disconnect();
     logicCanvas?.remove();
     console.log('logic canvas removed')
@@ -198,7 +242,23 @@ const test = useTemplateRef('test');
 
 const onSubmit = async () => {
     let ref = test.value._vnode.component.exposed;
-    console.log('submit', ref.onSubmit())
+    let result = await ref.onSubmit();
+    if (result) {
+        levelTimerEndAt = Date.now();
+        clearInterval(levelTimerInterval);
+
+        resultModalData.value[0].star = false;
+        resultModalData.value[1].star = false;
+        resultModalData.value[2].star = false;
+        $("#reviewPopup").modal('show');
+        await sleep(200);
+        resultModalData.value[0].star = true;
+        await sleep(200);
+        resultModalData.value[1].star = true;
+        await sleep(200);
+        resultModalData.value[2].star = true;
+
+    }
 }
 
 </script>
@@ -210,15 +270,17 @@ const onSubmit = async () => {
             <button class="btn btn-outline-secondary" @click="handleBack()">Back</button>
         </div>
         <div class="app-outer">
-            <h1 class="w-100 text-center">{{ level.world.name }} - {{ level.name }}</h1>
+            <h1 class="w-100 text-center">{{ level?.world?.name }} - {{ level?.name }}</h1>
             <div class="app-inner">
-                <div v-if="!level.hideCanvas" class="d-flex justify-content-center m-1 logic-canvas-container">
+                <div class="d-flex justify-content-center m-1 logic-canvas-container">
                     <div class="logic-canvas-scale">
                         <div class="logic-canvas-here">
+                            <div class="level-timer"></div>
                             <img src="@/assets/info-circle.svg"
                                 class="canvas-info-icon position-absolute top-0 end-0 m-3 z-3" alt="info" />
                             <div class="canvas-info-tooltip position-absolute top-50 start-50 translate-middle">
-                                <p><b>Add Gate:</b> Click / Tap the gate you want to add from the gate deck. You can also drag the gate from the gate deck</p>
+                                <p><b>Add Gate:</b> Click / Tap the gate you want to add from the gate deck. You can
+                                    also drag the gate from the gate deck</p>
                                 <div class="logic-canvas-and-demo"></div>
                                 <p><b>Remove Gate:</b> Right-click or drag the gate outside the canvas</p>
                                 <p><b>Move Gate:</b> Drag the gate.</p>
@@ -233,7 +295,7 @@ const onSubmit = async () => {
                             <button class="btn btn-secondary undo-btn m-1" @click.prevent="handleUndo">Undo</button>
                         </div>
                     </div>
-                    <button v-if="!level.hideSubmit" class="btn btn-primary mt-0 mb-2" id="submit-btn"
+                    <button v-if="!level?.hideSubmit" class="btn btn-primary mt-0 mb-2" id="submit-btn"
                         @click="onSubmit">Submit</button>
                 </div>
 
@@ -251,11 +313,15 @@ const onSubmit = async () => {
                         <h5 class="modal-title">Result</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <p>Modal body text goes here.</p>
+                    <div class="modal-body d-flex justify-content-around">
+                        <div v-for="modal in resultModalData" class="d-flex flex-column align-items-center">
+                            <img v-if="modal.star" src="../assets/star-fill.svg" alt="star" class="star result-star result-star-fill" />
+                            <img v-else src="../assets/star.svg" alt="star" class="star result-star" />
+                            <p class="mt-3">{{ modal.text }}</p>
+                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary">World Selection</button>
+                        <button type="button" class="btn btn-primary" @click="handleBack">World Selection</button>
                         <button type="button" class="btn btn-primary">Restart</button>
                         <button type="button" class="btn btn-primary">Next Level</button>
                     </div>
@@ -271,16 +337,41 @@ const onSubmit = async () => {
     position: relative;
     width: 100%;
     max-width: 1800px;
-    max-height: 100vh;
+    /* max-height: 100vh; */
     padding: 1em;
     padding-top: 0%;
     color: "#ccc";
+}
+
+.level-timer {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .canvas-info-icon {
     width: 1.5em;
     height: 1.5em;
     cursor: pointer;
+}
+
+.result-star {
+    width: 3em;
+    height: 3em;
+}
+
+@keyframes stamp {
+    0% {
+        transform: scale(2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.result-star-fill {
+    animation: stamp 0.5s;
 }
 
 :global(.gate-deck-item-container) {
@@ -423,7 +514,7 @@ const onSubmit = async () => {
     }
 
     .logic-gate-deck {
-        transition: opacity 0.5s, transform 0.5s;
+        transition: opacity 0.5s, transform 0.5s, height 0.5s;
     }
 
     .logic-canvas-scale {
@@ -454,26 +545,29 @@ const onSubmit = async () => {
         border: 1px solid #666;
         z-index: 1000 !important;
         background-color: rgba(50, 50, 50, 0.9);
-        pointer-events: auto; 
+        pointer-events: auto;
     }
 
     .is-pinned .logic-gate-deck {
         transform: translateY(-200px);
         opacity: 0;
         pointer-events: none;
+        order: 2;
     }
 
     .is-pinned #submit-btn {
-        transform: translateY(-250px);
+        transform: translateY(-20px);
+        pointer-events: auto;
+        order: 1;
     }
 
     .challenge-container {
         transition: transform 0.5s;
     }
-    
-    .is-pinned ~ .challenge-container {
-        transform: translateY(-200px);
-    }
+
+    /* .is-pinned ~ .challenge-container {
+        transform: translateY(-px);
+    } */
 }
 </style>
 

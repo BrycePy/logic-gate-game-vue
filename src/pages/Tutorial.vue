@@ -12,7 +12,7 @@ import { populateGateDeck } from './Play.vue';
 
 const handleBack = () => {
     console.log('back')
-    hintCursor.clear();
+    $("html, body").animate({ scrollTop: 0 }, 10);
     mountApp(WorldSelection);
 }
 
@@ -111,6 +111,7 @@ onMounted(async () => {
         let mechConnectDiv = document.querySelector('.mech-conneect');
         let mechToggleDiv = document.querySelector('.mech-toggle');
         let mechCompleteDiv = document.querySelector('.mech-complete-text');
+        let skipBtn = document.querySelector('.skip-btn');
 
         let target = null;
         let throttle = new Throttle(100);
@@ -146,7 +147,6 @@ onMounted(async () => {
 
         highlight(mechAddDiv);
         gate = await hintCursor.addGate('AND');
-        gate._removeable = false;
 
         await sleep(100);
         setTimeout(async () => {
@@ -168,11 +168,13 @@ onMounted(async () => {
 
         highlight(mechCompleteDiv);
         mechCompleteDiv.style.opacity = 1;
+        skipBtn.style.display = 'none';
     }
 
 })
 
 onBeforeUnmount(() => {
+    hintCursor.clear();
     clearInterval(highlightUpdateInterval);
     clearInterval(in1Tracker);
     clearInterval(in2Tracker);
@@ -329,6 +331,15 @@ onBeforeUnmount(() => {
     top: -40px;
 }
 
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
 .mech-current-step-highlighter {
     position: absolute;
     width: calc(100% + 1em);
@@ -337,6 +348,7 @@ onBeforeUnmount(() => {
     top: -0.25em;
     border-radius: 1em;
     background-color: rgba(100, 100, 50, 0.3);
+    animation: blink 1s infinite;
 }
 
 .mech-complete-text {
