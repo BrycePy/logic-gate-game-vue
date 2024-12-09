@@ -11,6 +11,7 @@ import worlds from "./levels/levels";
 import "@/libs/jquery.ui.touch-punch.min.js";
 import "drag-drop-touch";
 import userData from "./UserData";
+import "@/libs/lz-string.min.js";
 
 const mainEventManager = new EventManager();
 export { mainEventManager as eventManager };

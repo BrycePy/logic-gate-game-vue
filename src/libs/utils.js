@@ -120,3 +120,77 @@ function timeStrFromSeconds(seconds) {
 }
 
 export { timeStrFromSeconds };
+
+function calculateIntersectionRatio(element1, element2){
+  let rect1 = element1.getBoundingClientRect();
+  let rect2 = element2.getBoundingClientRect();
+  let xOverlap = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left));
+  let yOverlap = Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
+  let overlapArea = xOverlap * yOverlap;
+  let area1 = rect1.width * rect1.height;
+  let area2 = rect2.width * rect2.height;
+  return overlapArea / Math.min(area1, area2);
+}
+
+export { calculateIntersectionRatio };
+
+class Timer{
+  constructor(){
+    this.startTime = 0;
+    this.elapsedTimeAtPause = 0;
+    this.paused = false;
+  }
+  start(){
+    if(this.paused){
+      this.startTime = Date.now() - this.elapsedTimeAtPause;
+      this.paused = false
+    }else{
+      this.startTime = this.startTime || Date.now();
+    }
+  }
+
+  pause(){
+    if(this.paused) return;
+    this.elapsedTimeAtPause = Date.now() - this.startTime;
+    this.paused = true;
+  }
+
+  set(timeElapsedSec){
+    if(this.paused){
+      this.elapsedTimeAtPause = timeElapsedSec * 1000;
+    }else{
+      this.startTime = Date.now() - timeElapsedSec * 1000;
+    }
+  }
+
+  reset(){
+    this.startTime = 0;
+    this.elapsedTimeAtPause = 0;
+    this.paused = false;
+  }
+
+  getElapsedTime(){
+    if(this.paused){
+      return this.elapsedTimeAtPause / 1000;
+    }else{
+      return (Date.now() - this.startTime) / 1000;
+    }
+  }
+
+  getElapsedTimeStr(tSec){
+    let t = tSec? tSec : this.getElapsedTime();
+    let seconds = Math.floor(t);
+    let minutes = Math.floor(seconds / 60);
+    seconds = seconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+}
+
+export { Timer };
+
+
+const mapRange = (value, low1, high1, low2, high2) => {
+  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+
+export { mapRange };

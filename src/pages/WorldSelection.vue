@@ -1,6 +1,6 @@
 <script setup>
 import 'bootstrap/dist/css/bootstrap.css'
-import worlds from '@/levels/levels';
+import worlds, { allLevels } from '@/levels/levels';
 import '../assets/main.css';
 import { onBeforeUnmount, onMounted } from 'vue';
 import { mountApp, getCallerArgs } from '../libs/utils';
@@ -20,14 +20,20 @@ onMounted(() => {
     let newUrl = urlUpToHash + '#world-selection';
     window.history.pushState({}, '', newUrl);
 
+    hintCursor.clear();
     if(!userData.getAttempt('Basic.Tutorial', 'stars')){
         const startBtn = $('.go-to-play')[0];
-        hintCursor.clear();
         hintCursor.add({
             element: startBtn,
             animation: 'click'
         });
     }
+
+    allLevels.forEach(level => {
+        if(userData.getAttempt(level.id, 'animate_world_select')){
+            userData.setAttempt(level.id, 'animate_world_select', false);
+        }
+    })
 })
 
 onBeforeUnmount(()=>{
@@ -62,8 +68,8 @@ const handlePlay = (level) => {
                             <!-- <img class="card-img-top" src="..." alt="Card image cap"> -->
                             <div class="card-body">
                                 <h5 class="card-title">{{ level.name }}
-                                    <div class="star-container">
-                                        <div v-for="star in (userData.getAttempt(level.id, 'stars') || [false, false, false])">
+                                    <div class="star-container" :class="userData.getAttempt(level.id, 'animate_world_select')?'star-animate':''">
+                                        <div class="star-spin" v-for="star in (userData.getAttempt(level.id, 'stars') || [false, false, false])">
                                             <img v-if="star" src="../assets/star-fill.svg" alt="star" class="star result-star result-star-fill" />
                                             <img v-else src="../assets/star.svg" alt="star" class="star result-star" />
                                         </div>
@@ -102,6 +108,40 @@ const handlePlay = (level) => {
     width: 300px;
     margin-left: auto;
     margin-right: auto;
+}
+
+@keyframes stamp {
+    0% {
+        transform: scale(2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.star-animate {
+    animation: stamp 2s;
+}
+
+.star-animate div:nth-child(1) .result-star-fill {
+    animation: spin 2s;
+}
+
+.star-animate div:nth-child(2) .result-star-fill {
+    animation: spin 3s;
+}
+
+.star-animate div:nth-child(3) .result-star-fill {
+    animation: spin 4s;
 }
 
 @media (min-width: 600px) {

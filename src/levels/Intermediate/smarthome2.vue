@@ -4,13 +4,13 @@ import { inject, onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
 import smarthomevitual from '@/components/smarthomevitual.vue';
 
 const data = {
-    name: 'Smart Home 1',
-    description: 'Basic Motion Control - Set up a single motion sensor to automate the lighting system.',
+    name: 'Smart Home 2',
+    description: 'Comprehensive Coverage - Integrate multiple motion sensors for complete room coverage.',
     availableGates: ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'],
     hideSubmit: false,
     timeLimit: 60,
-    maxGateCount: 0
-}
+    maxGateCount: 3
+};
 
 export default {
     ...data,
@@ -30,21 +30,26 @@ let inputcb;
 
 onMounted(async () => {
     sim = smvitual.value;
-    sim.addMotionSensor(10, 10);
+    sim.addMotionSensor(10, 10); // M1
+    sim.addMotionSensor(-10, 10); // M2
+    sim.addMotionSensor(-10, -10); // M3
+    sim.addMotionSensor(10, -10); // M4
 
-    logicCanvas.createInput().setLabel('M1');
-    logicCanvas.createOutput().setLabel('Light');
+    logicCanvas.createInput()
+    logicCanvas.createInput()
+    logicCanvas.createInput()
+    logicCanvas.createInput()
+    logicCanvas.createOutput()
 
     setTimeout(() => {
         sim.linkLight(world.outputs[0].in(0));
-        ['M1'].forEach((label, i) => {
+        ['M1', 'M2', 'M3', 'M4'].forEach((label, i) => {
             logicCanvas.world.gates[i].setLabel(label);
         });
     }, 1000);
-
 })
 
-onBeforeUnmount(()=>{
+onBeforeUnmount(() => {
     sim.personPrompt();
 })
 
@@ -54,6 +59,18 @@ const onSubmit = async () => {
     $('#submit-btn').prop('disabled', true);
     let passed = true;
     let message;
+
+    const pathFunc = (p)=>{
+        if(p < 0.5){
+            return [0.5, mapRange(p, 0, 0.5, 2, 0.8)];
+        }else{
+            p = mapRange(p, 0.5, 1, 0, 1);
+            return [
+                Math.sin(p * Math.PI * 2)*0.4 + 0.5,
+                Math.cos(p * Math.PI * 2)*0.4 + 0.5
+            ]
+        }
+    }
 
     await smvitual.value.personCycleTest((data) => {
         let motionSensors = data.distances.map((d, i) => {
@@ -68,7 +85,7 @@ const onSubmit = async () => {
             }. Can you double-check your configuration?`;
             return true;
         }
-    })
+    }, pathFunc)
 
     if(passed){
         sim.personPrompt("Great job! The system is now working perfectly. Thank you for your help!");
@@ -93,17 +110,17 @@ defineExpose({
         </div>
         <div class="story">
             <p>
-                Welcome to your first Smart Home Challenge! The homeowner has installed a single motion sensor (M1) in their living room to automate their lighting system. They want the light to turn on automatically whenever motion is detected and turn off when no motion is detected.
+                In this challenge, the homeowner has expanded their living room's smart lighting system. The single motion sensor (M1) wasn't enough to cover the entire room, so they’ve installed four motion sensors (M1, M2, M3, and M4) to ensure complete coverage.
             </p>
             <p>
-                Your task is to configure the system so that the motion sensor (M1) controls the light:
+                Your task is to configure the system so that the light behaves as follows:
             </p>
             <ul>
-                <li>When M1 detects motion, the light should turn on.</li>
-                <li>When M1 stops detecting motion, the light should turn off.</li>
+                <li>The light should turn on if any one of the four motion sensors detects motion.</li>
+                <li>The light should turn off only when none of the motion sensors detect motion.</li>
             </ul>
             <p>
-                Set up and test the system to ensure it works as expected!
+                Design and test the system to ensure all sensors work together to control the light effectively!
             </p>
         </div>
     </div>

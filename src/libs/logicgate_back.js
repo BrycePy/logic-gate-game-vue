@@ -285,6 +285,7 @@ class World {
 	}
 
 	setInputsState(inputs) {
+		if(!inputs) return;
 		inputs = inputs.map(i => i ? State.ON : State.OFF);
 		this.inputs.forEach((gate, i) => {
 			gate.out(0).setState(inputs[i]);
@@ -421,7 +422,7 @@ class World {
 		return result;
 	}
 
-	clearSelction() {
+	clearSelection() {
 		this.previousTerminal = null;
 	}
 
@@ -496,6 +497,8 @@ let functionSpecOR = new LogicGateFunctionSpec("OR", (a, b) => a || b, 2, 1);
 let functionSpecNOR = new LogicGateFunctionSpec("NOR", (a, b) => !(a || b), 2, 1);
 let functionSpecXOR = new LogicGateFunctionSpec("XOR", (a, b) => (a || b) && !(a && b), 2, 1);
 let functionSpecXNOR = new LogicGateFunctionSpec("XNOR", (a, b) => !((a || b) && !(a && b)), 2, 1);
+let functionSpecUnknown = new LogicGateFunctionSpec("UNKNOWN", (a, b) => {false}, 2, 1);
+let functionSpecUnknown1 = new LogicGateFunctionSpec("UNKNOWN", (a) => {false}, 1, 1);
 
 let functionSpecIN = new LogicGateFunctionSpec("IN", () => { }, 0, 1);
 let functionSpecOUT = new LogicGateFunctionSpec("OUT", () => { }, 1, 0);
@@ -536,6 +539,14 @@ class FundamentalGate {
 	static OUT = {
 		name: "OUT",
 		functionSpec: functionSpecOUT
+	};
+	static UNKNOWN = {
+		name: "UNKNOWN",
+		functionSpec: functionSpecUnknown
+	};
+	static UNKNOWN1 = {
+		name: "UNKNOWN1",
+		functionSpec: functionSpecUnknown1
 	};
 	static isSpecFundamental(spec) {
 		let typeList = Object.values(FundamentalGate);

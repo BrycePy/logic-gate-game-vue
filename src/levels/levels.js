@@ -1,7 +1,13 @@
-import smarthome1 from "./Intermediate/smarthome1.vue";
+import SmartHomeDev from "./Intermediate/smarthomedev.vue";
 import Tutorial from "@/pages/Tutorial.vue";
 import andLevel from "./basic/letsmakenand1";
-import nothingLevel from "./basic/nothing";
+import nothingLevel from "./basic/nothing.vue";
+import SmartHome1 from "./Intermediate/smarthome1.vue";
+import SmartHome2 from "./Intermediate/smarthome2.vue";
+import SmartHome3 from "./Intermediate/smarthome3.vue";
+import SmartHome4 from "./Intermediate/smarthome4.vue";
+
+console.log("vue",nothingLevel);
 
 // name: 'Tutorial',
 // description: 'Learn the basics of logic gates and game mechanics',
@@ -9,11 +15,15 @@ import nothingLevel from "./basic/nothing";
 const worlds = [
     {name: "Basic", description: "Basic level", levels: [
         {name: "Tutorial", description: "Learn the basics of logic gates and game mechanics", goToPage: Tutorial},
+        nothingLevel,
         andLevel,
-        nothingLevel
     ]},
     {name: "Intermediate", description: "Intermediate level", levels: [
-        smarthome1
+        // SmartHomeDev,
+        SmartHome1,
+        SmartHome2,
+        SmartHome3,
+        SmartHome4
     ]},
     {name: "Advanced", description: "Advanced level", levels: [
         {name: "Level 4", description: "Level 4Level 1Level 1Level 1Level 1Level 1Level 1"},
@@ -52,11 +62,13 @@ worlds.forEach(world => {
 });
 
 const levelToId = {};
+const allLevels = [];
 Object.keys(idToLevel).forEach(id => {
     levelToId[idToLevel[id]] = id;
+    allLevels.push(idToLevel[id]);
 });
 
 export default worlds;
 
-export { idToLevel };
+export { idToLevel, allLevels, levelToId };
 

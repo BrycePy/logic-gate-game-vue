@@ -3,11 +3,12 @@ import { sleep } from '@/libs/utils';
 import { onBeforeUnmount } from 'vue';
 
 let ended = false;
-async function personCycleTest(callback) {
+let previousPosition = { x: 0, y: 0 };
+async function personCycleTest(callback, transformFunction) {
   let personElement = document.getElementById("living-room-person-1");
   const cycleEvery = 100;
   for (let tick = 0; tick < 1; tick += 1 / cycleEvery) {
-    await sleep(1000 / 40);
+    // await sleep(1000 / 40);
     await new Promise((resolve) => requestAnimationFrame(resolve));
     if (ended) {
       return;
@@ -15,8 +16,21 @@ async function personCycleTest(callback) {
     let personContainer = document.getElementById("living-room-1");
     let containerWidth = $(personContainer).width();
     let containerHeight = $(personContainer).height();
-    let x = Math.sin(tick * Math.PI * 2) * 150 + containerWidth / 2;
-    let y = Math.cos(tick * Math.PI * 2) * 100 + containerHeight / 2;
+    let rawX, rawY;
+    if (transformFunction) {
+      [rawX, rawY] = transformFunction(tick);
+    } else {
+      rawX = Math.sin(tick * Math.PI * 2) * 0.4 + 0.5;
+      rawY = Math.cos(tick * Math.PI * 2) * 0.4 + 0.5;
+    }
+
+    let dx = Math.abs(rawX - previousPosition.x);
+    let dy = Math.abs(rawY - previousPosition.y);
+    let enoughMovement = dx > 0.01 || dy > 0.01;
+    previousPosition = { x: rawX, y: rawY };
+
+    let x = rawX * containerWidth;
+    let y = rawY * containerHeight;
     personElement.style.left = x + "px";
     personElement.style.top = y + "px";
     let sensorsElement = document.getElementsByClassName("living-room-motion-sensor");
@@ -36,7 +50,7 @@ async function personCycleTest(callback) {
       let dx = sensorOffset.left - personOffset.left;
       let dy = sensorOffset.top - personOffset.top;
       let distance = Math.sqrt(dx * dx + dy * dy);
-      if(distance < 450/2) {
+      if (distance < 450 / 2 && enoughMovement) {
         sensorElement.classList.remove("sensor-deactivated");
       } else {
         sensorElement.classList.add("sensor-deactivated");
@@ -44,9 +58,10 @@ async function personCycleTest(callback) {
       distances.push(distance);
     }
     if (callback && callback({
-      person: {x, y},
-      distances
-    })){
+      person: { x, y },
+      distances: enoughMovement ? distances : distances.map(() => 10000),
+      enoughMovement
+    })) {
       return;
     }
   }
@@ -79,7 +94,8 @@ function addMotionSensor(x, y) {
   livingRoom.appendChild(sensor);
 }
 
-function addSwitch(label) {
+let switches = [];
+function addSwitch(label, callback) {
   let switchContainer = document.querySelector(".switch-container");
   let switchElement = document.createElement("div");
   switchElement.classList.add("labeled-switch");
@@ -91,6 +107,61 @@ function addSwitch(label) {
     </label>
   `;
   switchContainer.appendChild(switchElement);
+  switches.push(switchElement);
+
+  let input = switchElement.querySelector("input");
+  input.addEventListener("click", () => {
+    if (callback) {
+      callback(input.checked);
+    }
+  });
+  return input;
+}
+
+function addLinkedSwitch(label, terminal) {
+  let inputcb = addSwitch(label, (checked) => {
+    terminal.setState(checked);
+  });
+  terminal.world.eventManager.subscribe('TERMINAL_STATE_CHANGED', (t) => {
+    if (t === terminal) {
+      inputcb.checked = t.getState();
+    }
+  });
+  inputcb.checked = terminal.getState();
+  return inputcb;
+}
+
+function linkLight(terminal) {
+  if (terminal.getState()) {
+    lightOn();
+  } else {
+    lightOff();
+  }
+  terminal.world.eventManager.subscribe('TERMINAL_STATE_CHANGED', (t) => {
+    if (t === terminal) {
+      if (t.getState()) {
+        lightOn();
+      } else {
+        lightOff();
+      }
+    }
+  });
+}
+
+function personPrompt(text){
+  let personElement = document.getElementById("living-room-person-1");
+  personElement.style.zIndex = 100;
+  $(personElement).tooltip('dispose');
+  if(!text) return;
+  let boundary = document.querySelector(".app-outer");
+  $(personElement).tooltip({
+    title: text,
+    trigger: 'manual hover toggle',
+    placement: 'top',
+    animation: true,
+    boundary: boundary
+  });
+  $(personElement).tooltip('show');
 }
 
 onBeforeUnmount(() => {
@@ -102,7 +173,10 @@ defineExpose({
   lightOn,
   lightOff,
   addMotionSensor,
-  addSwitch
+  addSwitch,
+  addLinkedSwitch,
+  linkLight,
+  personPrompt
 })
 
 
@@ -111,11 +185,11 @@ defineExpose({
 <template>
   <div class="module-container">
     <div class="living-room-container" id="living-room-1">
-      <div class="living-room">LIVING ROOM
+      <div class="living-room light-off">LIVING ROOM
         <div class="living-room-person" id="living-room-person-1">P</div>
       </div>
     </div>
-  
+
     <div class="switch-container"></div>
   </div>
 </template>
@@ -149,7 +223,6 @@ defineExpose({
   font-size: large;
   justify-content: right;
 }
-
 </style>
 
 <style scope>
@@ -222,7 +295,8 @@ defineExpose({
   z-index: 10;
 }
 
-.living-room-motion-sensor, .living-room-person {
+.living-room-motion-sensor,
+.living-room-person {
   background-color: rgba(255, 255, 255);
 }
 
@@ -245,7 +319,7 @@ defineExpose({
   height: 34px;
 }
 
-.switch input { 
+.switch input {
   opacity: 0;
   width: 0;
   height: 0;
@@ -275,15 +349,15 @@ defineExpose({
   transition: .2s;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #2196F3;
 }
 
-input:focus + .slider {
+input:focus+.slider {
   box-shadow: 0 0 1px #2196F3;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   -webkit-transform: translateX(26px);
   -ms-transform: translateX(26px);
   transform: translateX(26px);

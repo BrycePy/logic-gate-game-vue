@@ -181,6 +181,7 @@ onMounted(async () => {
         skipBtn.style.display = 'none';
 
         userData.setAttempt(level.id, "stars", [true, true, true]);
+        userData.setAttempt(level.id, "animate_world_select", true);
     }
 
 })

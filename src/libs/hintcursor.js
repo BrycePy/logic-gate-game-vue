@@ -319,7 +319,7 @@ class LogicCanvasHint {
       let test = connection.from === terminal1 || connection.from === terminal2;
       if (!test) {
         setTimeout(() => {
-          this.world.clearSelction();
+          this.world.clearSelection();
           this.logicCanvas.showConnectableTerminals();
           this.cursorHintSeries.cursorHint.setAnimation("click", true);
         }, 500);
@@ -475,7 +475,7 @@ class LogicCanvasHint {
         this.currentHintSolution = async() => {
           this.eventManager.publish("CANVAS_EDIT_MODE_CHANGED", "WIRING");
           await sleep(100);
-          this.world.clearSelction();
+          this.world.clearSelection();
           this.world.makeConnection(terminal1);
           this.logicCanvas.mousePos = {
             x: (terminal1Offset.left + terminal2Offset.left) / 2,

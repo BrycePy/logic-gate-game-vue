@@ -7,25 +7,25 @@ import { inject, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const logicCanvas = inject('logicCanvas');
 const world = logicCanvas.world;
-const data = inject('truthTableLevelData');
+const ttLevelData = inject('truthTableLevelData');
 
-const inputs = data.inputs;
-const outputs = data.outputs;
+const inputs = ttLevelData.inputs;
+const outputs = ttLevelData.outputs;
 const tableHeader = [...inputs, ...outputs]
-const actualOutputs = ref(data.truthTable.map(testCase => [...testCase.outputs]));
+const actualOutputs = ref(ttLevelData.truthTable.map(testCase => [...testCase.outputs]));
 
 onMounted(() => {
     logicCanvas.clear();
-    data.inputs.forEach(input => {
+    ttLevelData.inputs.forEach(input => {
         logicCanvas.createInput().setLabel(input);
     });
-    data.outputs.forEach(output => {
+    ttLevelData.outputs.forEach(output => {
         logicCanvas.createOutput().setLabel(output);
     });
 })
 
 const run = async (testCaseIndex) => {
-    let testCase = data.truthTable[testCaseIndex];
+    let testCase = ttLevelData.truthTable[testCaseIndex];
     let inputs = testCase.inputs;
     let outputs = testCase.outputs;
     let result = await world.evaluate(inputs);
@@ -55,7 +55,7 @@ const run = async (testCaseIndex) => {
 const onSubmit = async () => {
     resetTableColor();
     let allMatch = true;
-    for(let i = 0; i < data.truthTable.length; i++){
+    for(let i = 0; i < ttLevelData.truthTable.length; i++){
         if(!await run(i)){
             allMatch = false;
         }
@@ -72,7 +72,7 @@ const resetTableColor = () => {
 const handleTestClick = async (testCaseIndex, e) => {
     let rowElement = e.target.parentElement;
     resetTableColor();
-    data.truthTable.forEach((tc, tcIndex) => {
+    ttLevelData.truthTable.forEach((tc, tcIndex) => {
         tc.outputs.forEach((output, index) => {
             actualOutputs.value[tcIndex][index] = output;
         });
@@ -84,14 +84,15 @@ const handleTestClick = async (testCaseIndex, e) => {
 
 defineExpose({
     onSubmit,
-    onCreated: data.onCreated
+    onCreated: ttLevelData.onCreated
 })
 
 </script>
 
 <template>
-    <p>{{ data.description }}</p>
-    <data.template v-if="data.template" />
+    <p>{{ ttLevelData.description }}</p>
+    <!-- <data.template v-if="data.template" /> -->
+    <ttLevelData v-if="ttLevelData.render"></ttLevelData>
     <div class="test-case-table-container">
         <table class="table table-dark table-hover text-center table-striped table-test-case">
             <thead>
@@ -100,7 +101,7 @@ defineExpose({
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="testCase, i in data.truthTable" class="table-test-case-row"
+                <tr v-for="testCase, i in ttLevelData.truthTable" class="table-test-case-row"
                     @click="(e) => { handleTestClick(i, e) }">
                     <td v-for="cell in testCase.inputs">{{ cell }}</td>
                     <td v-for="cell in actualOutputs[i]">{{ cell }}</td>

@@ -52,6 +52,31 @@ let logicGateDefaultTemplate = `
     <div class="logic-gate-body"></div>
   </div>
 
+  <div class="logic-gate-div-relative logic-gate logic-unknown-template">
+    <span class="logic-gate-label"></span>
+    <img class="logic-gate-image" src="gate-unknown.png" alt="UNKNOWN Gate" />
+    <div class="logic-gate-input-terminal logic-gate-terminal-container">
+      <div class="logic-gate-terminal"></div>
+      <div class="logic-gate-terminal"></div>
+    </div>
+    <div class="logic-gate-output-terminal logic-gate-terminal-container">
+      <div class="logic-gate-terminal"></div>
+    </div>
+    <div class="logic-gate-body"></div>
+  </div>
+
+  <div class="logic-gate-div-relative logic-gate logic-unknown1-template">
+    <span class="logic-gate-label"></span>
+    <img class="logic-gate-image" src="gate-unknown.png" alt="UNKNOWN Gate" />
+    <div class="logic-gate-input-terminal logic-gate-terminal-container">
+      <div class="logic-gate-terminal"></div>
+    </div>
+    <div class="logic-gate-output-terminal logic-gate-terminal-container">
+      <div class="logic-gate-terminal"></div>
+    </div>
+    <div class="logic-gate-body"></div>
+  </div>
+
   <div class="logic-gate-div-relative logic-gate logic-gate-long logic-nand-template">
     <span class="logic-gate-label"></span>
     <img class="logic-gate-image" src="gate-nand.png" alt="NAND Gate" />

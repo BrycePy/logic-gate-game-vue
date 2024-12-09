@@ -1,5 +1,6 @@
 <script>
 const populateGateDeck = (logicCanvas, gates) => {
+    gates = [...gates, 'UNKNOWN', 'UNKNOWN1']
     let gateDeck = document.querySelector('.logic-gate-deck');
     gates.forEach(gate => {
         let gateDiv = logicCanvas.getGateTemplate(gate);
@@ -63,7 +64,7 @@ export { populateGateDeck };
 <script setup>
 import 'bootstrap/dist/css/bootstrap.css'
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { mountApp, getCallerArgs, setCallerArgs, timeStrFromSeconds } from '../libs/utils';
+import { mountApp, getCallerArgs, setCallerArgs, timeStrFromSeconds, Timer } from '../libs/utils';
 import WorldSelection from './WorldSelection.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
@@ -105,27 +106,34 @@ let logicCanvas, modal;
 let challengeApp;
 let level = getLevel();
 let intersectionObserver;
-let levelTimerInterval;
-let levelTimerStartAt;
-let levelTimerEndAt;
+let timer = new Timer();
+let paintTimerInterval;
 
 let resultModalData = ref([
-    {star: true, text: 'Level Solved!'},
-    {star: true, text: 'Time'},
-    {star: false, text: '# of Gates'},
+    { star: true, text: 'Level Solved!' },
+    { star: true, text: 'Time' },
+    { star: false, text: '# of Gates' },
 ])
 
-const startTimer = ()=>{
-    levelTimerEndAt = undefined;
-    clearInterval(levelTimerInterval);
-    levelTimerStartAt = Date.now();
-    levelTimerInterval = setInterval(() => {
-        let time = (Date.now() - levelTimerStartAt) / 1000;
-        let userTimeStr = timeStrFromSeconds(time);
-        let timeLimitStr = level.timeLimit ? timeStrFromSeconds(level.timeLimit) : '∞';
-        let timer = document.querySelector('.level-timer');
-        timer.innerText = `${userTimeStr} / ${timeLimitStr}`;
-    }, 1000);
+const paintTimer = () => {
+    let userTimeStr = timer.getElapsedTimeStr();
+    let timeLimitStr = level.timeLimit ? timer.getElapsedTimeStr(level.timeLimit) : '∞';
+    let timerDiv = document.querySelector('.level-timer');
+    timerDiv.innerText = `${userTimeStr} / ${timeLimitStr}`;
+}
+
+
+const continueTimerOnUpdate = () => {
+    let userModifyEvents = [
+        'GATE_CREATED',
+        'WIRE_CREATED',
+        'GATE_REMOVED',
+        'WIRE_REMOVED',
+        'CANVAS_GATE_MOVE_START'
+    ];
+    logicCanvas.eventManager.onceMulti(userModifyEvents, () => {
+        timer.start();
+    })
 }
 
 onMounted(async () => {
@@ -142,6 +150,8 @@ onMounted(async () => {
         logicCanvas.startVisualTick();
         logicCanvas.startWorldTick(20);
         logicCanvas.world.enableAutoSleep();
+
+        paintTimerInterval = setInterval(paintTimer, 100);
 
         populateGateDeck(logicCanvas, level.availableGates || [
             'AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR'
@@ -177,27 +187,29 @@ onMounted(async () => {
         challengeApp.mount('#challenge');
     }
 
-    startTimer();
-
-    if(level.onCreated){
+    if (level.onCreated) {
         setTimeout(() => {
             level.onCreated(logicCanvas);
         }, 200)
     }
+
     let userAttemptCanvas = userData.getAttempt(level.id, 'canvas');
     let userAttemptTime = userData.getAttempt(level.id, 'time');
-    if(userAttemptCanvas){
+    if (userAttemptCanvas) {
         setTimeout(() => {
             logicCanvas.load(userAttemptCanvas);
-            levelTimerStartAt = Date.now() - userAttemptTime * 1000;
-            clearInterval(levelTimerInterval);
+            timer.set(userAttemptTime);
+            timer.pause();
+            continueTimerOnUpdate();
         }, 500)
+    } else {
+        timer.start();
     }
 })
 
 onBeforeUnmount(() => {
     $("#reviewPopup").modal('hide');
-    clearInterval(levelTimerInterval);
+    clearInterval(paintTimerInterval);
     intersectionObserver?.disconnect();
     logicCanvas?.remove();
     console.log('logic canvas removed')
@@ -209,6 +221,7 @@ let undoState = null;
 const handleUndo = async () => {
     if (!undoState) return;
     logicCanvas.load(undoState);
+    timer.set(undoState.timeElapsed);
     undoState = null;
     let undobtn = document.querySelector('.undo-btn');
     undobtn.style.display = 'none';
@@ -220,20 +233,8 @@ const handleClear = async (e) => {
     clearbtn.disabled = true;
 
     undoState = logicCanvas.export();
-    logicCanvas.world.nonIOGates.forEach(gate => {
-        gate.domElement.animate([
-            { opacity: 1 },
-            { opacity: 0 }
-        ], { duration: 200 }).onfinish = () => {
-            gate.remove();
-        }
-    })
-    await sleep(200);
-    logicCanvas.world.wires.forEach((wire) => {
-        wire.remove();
-    })
-
-    await sleep(300);
+    undoState.timeElapsed = timer.getElapsedTime();
+    handleRestart();
     clearbtn.disabled = false;
     undobtn.style.display = 'block';
 
@@ -251,31 +252,30 @@ const test = useTemplateRef('test');
 
 const onSubmit = async () => {
     let ref = test.value._vnode.component.exposed;
+    timer.pause();
     let solved = await ref.onSubmit();
     if (solved) {
-        if(!levelTimerEndAt){
-            levelTimerEndAt = Date.now();
-        }
-        clearInterval(levelTimerInterval);
-
         resultModalData.value[0].star = false;
         resultModalData.value[1].star = false;
         resultModalData.value[2].star = false;
 
-        let timeUser = Math.floor((levelTimerEndAt - levelTimerStartAt) / 1000);
-        let timeUserStr = timeStrFromSeconds(timeUser);
-        let timeLimitStr = level.timeLimit ? timeStrFromSeconds(level.timeLimit) : '∞';
+        let timeUser = timer.getElapsedTime();
+        let timeUserStr = timer.getElapsedTimeStr();
+        let timeLimitStr = level.timeLimit ? timer.getElapsedTimeStr(level.timeLimit) : '∞';
         resultModalData.value[1].text = `Time: ${timeUserStr} / ${timeLimitStr}`;
         let timeStar = level.timeLimit ? timeUser <= level.timeLimit : true;
 
         let gateCount = logicCanvas.world.nonIOGates.length;
-        let gateLimit = level.maxGateCount || "∞";
+        let gateLimit = level.maxGateCount == undefined ? "∞": level.maxGateCount;
         resultModalData.value[2].text = `# of Gates: ${gateCount} / ${gateLimit}`;
-        let gateStar = level.maxGateCount ? gateCount <= level.maxGateCount : true;
+        let gateStar = level.maxGateCount == undefined ? true : gateCount <= level.maxGateCount;
 
         userData.setAttempt(level.id, "stars", [true, timeStar, gateStar]);
         userData.setAttempt(level.id, "time", timeUser);
         userData.setAttempt(level.id, "canvas", logicCanvas.export());
+        userData.setAttempt(level.id, "animate_world_select", true);
+
+        continueTimerOnUpdate();
 
         $("#reviewPopup").modal('show');
         await sleep(200);
@@ -284,17 +284,19 @@ const onSubmit = async () => {
         resultModalData.value[1].star = timeStar;
         await sleep(200);
         resultModalData.value[2].star = gateStar;
-
+    } else {
+        timer.start();
     }
 }
 
-const handleRestart = ()=>{
+const handleRestart = () => {
     $("#reviewPopup").modal('hide');
     logicCanvas.world.clearNonIO();
-    startTimer();
+    timer.reset();
+    timer.start();
 }
 
-const handleNextLevel = async()=>{
+const handleNextLevel = async () => {
     let nextLevel = level.next;
     await sleep(500)
     handleBack();
@@ -302,9 +304,32 @@ const handleNextLevel = async()=>{
     mountApp(Play, nextLevel.id);
 }
 
+const debugExport = () => {
+    if ($('#export-textarea').length) {
+        $('#export-textarea').remove();
+        return;
+    }
+
+    console.log('exporting canvas')
+    let data = logicCanvas.exportAsStr();
+    let textArea = document.createElement('textarea');
+    textArea.id = 'export-textarea';
+    textArea.value = data;
+    textArea.style.position = 'fixed';
+    textArea.style.width = '90%';
+    textArea.style.height = '90%';
+    textArea.style.zIndex = 1000;
+    textArea.style.top = '5%';
+    textArea.style.left = '5%';
+    document.body.appendChild(textArea);
+    textArea.select();
+}
+
 </script>
 
 <template>
+    <button @click="debugExport" style="opacity: 0.1;"
+        class="position-fixed bottom-0 start-50 m-3 translate-middle-x z-3">Export Canvas</button>
     <div class="app-container">
         <img class="logo" src="/logowhite.png" />
         <div class="back-button">
@@ -320,13 +345,15 @@ const handleNextLevel = async()=>{
                             <img src="@/assets/info-circle.svg"
                                 class="canvas-info-icon position-absolute top-0 end-0 m-3 z-3" alt="info" />
                             <div class="canvas-info-tooltip position-absolute top-50 start-50 translate-middle">
-                                <p><b>Add Gate:</b> Click / Tap the gate you want to add from the gate deck. You can
-                                    also drag the gate from the gate deck</p>
+                                <p><b>Adding a Gate:</b> Click or tap on a gate in the gate deck to add it to the
+                                    canvas. Alternatively, drag the gate from the deck onto the canvas.</p>
                                 <div class="logic-canvas-and-demo"></div>
-                                <p><b>Remove Gate:</b> Right-click or drag the gate outside the canvas</p>
-                                <p><b>Move Gate:</b> Drag the gate.</p>
-                                <p><b>Connect Gates:</b> Click / Tap on the terminal of one gate, then on the terminal
-                                    of another gate. Or drag one of the terminal to another terminal</p>
+                                <p><b>Removing a Gate:</b> Right-click on the gate or drag it outside the canvas to
+                                    remove it.</p>
+                                <p><b>Moving a Gate:</b> Drag the gate to reposition it on the canvas.</p>
+                                <p><b>Adding or Removing a Wire:</b> Click or tap on a terminal of one gate, then on the
+                                    terminal of another gate. You can also drag one terminal to another to connect or
+                                    disconnect them.</p>
                             </div>
                         </div>
                     </div>
@@ -341,6 +368,7 @@ const handleNextLevel = async()=>{
                 </div>
 
                 <div class="challenge-container">
+                    <h2>Chellenge:</h2>
                     <div id="challenge" ref="test"></div>
                     <div class="testdummy"></div>
                 </div>
@@ -356,7 +384,8 @@ const handleNextLevel = async()=>{
                     </div>
                     <div class="modal-body d-flex justify-content-around">
                         <div v-for="modal in resultModalData" class="d-flex flex-column align-items-center">
-                            <img v-if="modal.star" src="../assets/star-fill.svg" alt="star" class="star result-star result-star-fill" />
+                            <img v-if="modal.star" src="../assets/star-fill.svg" alt="star"
+                                class="star result-star result-star-fill" />
                             <img v-else src="../assets/star.svg" alt="star" class="star result-star" />
                             <p class="mt-3">{{ modal.text }}</p>
                         </div>
@@ -374,6 +403,10 @@ const handleNextLevel = async()=>{
 </template>
 
 <style scoped>
+:global(.tooltip){
+    z-index: 1000;
+}
+
 .app-container {
     position: relative;
     width: 100%;
@@ -406,6 +439,7 @@ const handleNextLevel = async()=>{
     0% {
         transform: scale(2);
     }
+
     100% {
         transform: scale(1);
     }
@@ -430,7 +464,7 @@ const handleNextLevel = async()=>{
 }
 
 .canvas-info-tooltip {
-    width: 70%;
+    width: 90%;
     background-color: rgba(0, 0, 0, 0.7);
     color: white;
     border-radius: 0.5em;

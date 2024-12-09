@@ -8,6 +8,11 @@ class LevelBase {
         this.onCreated = data.onCreated;
         this.onSubmit = data.onSubmit;
 
+        this.initialCanvas = data.initialState;
+        this.knownSolution = data.knownSolution;
+        this.hints = data.hints;
+        // this.template = data.template;
+
         if(!data.name) {
             throw new Error("Level must have a name");
         }
