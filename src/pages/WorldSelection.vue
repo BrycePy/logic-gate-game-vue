@@ -19,31 +19,35 @@ onMounted(() => {
     let newUrl = urlUpToHash + '#world-selection';
     window.history.pushState({}, '', newUrl);
 
-    // const startBtn = $('.go-to-play')[0];
-    // hintCursor.clear();
-    // hintCursor.add({
-    //     element: startBtn,
-    //     animation: 'click'
-    // });
+    const startBtn = $('.go-to-play')[0];
+    hintCursor.clear();
+    hintCursor.add({
+        element: startBtn,
+        animation: 'click'
+    });
 })
 
 onBeforeUnmount(()=>{
-    // $('.wsimg').remove();
+    hintCursor.clear();
 })
 
 const handlePlay = (level) => {
-    // console.log(world, level);
-    mountApp(Play, level.id);
+    if(level.goToPage){
+        mountApp(level.goToPage);
+    }else{
+        $("html, body").animate({ scrollTop: 0 }, 10);
+        mountApp(Play, level.id);
+    }
 }
 
 </script>
 
 <template>
+<div class="app-container">
     <div class="back-button">
         <button class="btn btn-outline-secondary" @click="mountApp(MainMenu)">Back</button>
     </div>
     <div class="app-inner">
-    
         <img class="logo wsimg" src="/logowhite.png" />
     
         <div id="world-selection" class="world-selection-container" data-bs-theme="dark">
@@ -70,10 +74,17 @@ const handlePlay = (level) => {
             </div>
         </div>
     </div>
-
+</div>
 </template>
 
 <style scoped>
+.app-container {
+    position: relative;
+    width: 100%;
+    max-width: 1500px;
+    padding: 1em;
+}
+
 .back-button {
     position: absolute;
     top: 0;
@@ -91,7 +102,7 @@ const handlePlay = (level) => {
 
 @media (min-width: 600px) {
     .logo {
-        width: 500px;
+        width: 300px;
         /* margin-top: 2em; */
     }
 }
@@ -124,7 +135,7 @@ const handlePlay = (level) => {
 .world {
     padding: 1em;
     border: 1px solid #666;
-    border-radius: 1em;
+    border-radius: 2em;
     background-color: rgba(0, 0, 0, 0.5);
 }
 
@@ -145,13 +156,5 @@ header {
     display: flex;
     place-items: center;
     padding-right: calc(var(--section-gap) / 2);
-}
-
-@media (min-width: 1024px) {
-    header .wrapper {
-        display: flex;
-        place-items: flex-start;
-        flex-wrap: wrap;
-    }
 }
 </style>

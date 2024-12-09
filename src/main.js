@@ -5,15 +5,17 @@ import { mountApp, getCallerArgs } from "./libs/utils";
 import MainMenu from "./pages/MainMenu.vue";
 import WorldSelection from "./pages/WorldSelection.vue";
 import Play from "./pages/Play.vue";
+import Tutorial from "./pages/Tutorial.vue";
 import { LogicCanvasHint } from "./libs/hintcursor";
-import Nothing from "./pages/nothing.vue";
 import worlds from "./levels/levels";
 import "@/libs/jquery.ui.touch-punch.min.js";
+import "drag-drop-touch";
 
 const mainEventManager = new EventManager();
 export { mainEventManager as eventManager };
 
-const hintCursor = new LogicCanvasHint();
+// const rootDiv = document.querySelector("#app");
+const hintCursor = new LogicCanvasHint(undefined);
 export { hintCursor };
 
 console.log(location);
@@ -48,7 +50,9 @@ if (hash.startsWith("#play")) {
   mountApp(WorldSelection);
 } else if (hash.startsWith("#smart-home-debug")) {
   mountApp(WorldSelection);
-} else if (hash.startsWith("#mem-leak-test")) {
+} else if (hash.startsWith("#tutorial")) {
+  mountApp(Tutorial);
+}else if (hash.startsWith("#mem-leak-test")) {
   testMemleak();
 } else {
   mountApp(MainMenu);

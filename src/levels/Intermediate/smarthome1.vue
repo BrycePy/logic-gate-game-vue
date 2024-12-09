@@ -7,12 +7,17 @@ const name = 'Smart Home Dev';
 const description = 'For Testing Smart Home Levels';
 const availableGates = ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'];
 
+const data = {
+    name: 'Smart Home Dev',
+    description: 'For Testing Smart Home Levels',
+    availableGates: ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'],
+    hideSubmit: false
+}
+
 export default {
-    name,
-    description,
-    availableGates,
+    ...data,
     data() {
-        return { name, description, availableGates };
+        return { ...data };
     }
 }
 
@@ -60,13 +65,6 @@ onBeforeUnmount(()=>{
 const onSubmit = async () => {
     $('#submit-btn').prop('disabled', true);
     await smvitual.value.personCycleTest((data) => {
-        // // console.log('callback', data);
-        // if (data.distances.some(d => d < 450/2)) {
-        //     smvitual.value.lightOn();
-        // } else {
-        //     smvitual.value.lightOff();
-        // }
-
         data.distances.forEach((d, i) => {
             if (d < 450 / 2) {
                 logicCanvas.world.inputs[i].out(0).setState(true);
@@ -86,7 +84,6 @@ defineExpose({
 
 <template>
     <div class="challenge">
-        <h1 class="challenge-title">Challenge {{ name }}</h1>
         <p class="challenge-description">Description</p>
 
         <div class="mobile-scale">

@@ -11,6 +11,13 @@ onMounted(() => {
     let urlUpToHash = window.location.href.split('#')[0];
     let newUrl = urlUpToHash + '#main-menu';
     window.history.pushState({}, '', newUrl);
+
+    const startBtn = $('.start-btn')[0];
+    hintCursor.clear();
+    hintCursor.add({
+        element: startBtn,
+        animation: 'click'
+    });
 })
 
 </script>

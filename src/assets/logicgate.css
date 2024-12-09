@@ -174,6 +174,7 @@
     animation-duration: 0.5s;
     animation-direction: alternate-reverse;
     animation-iteration-count: infinite;
+    transform: scale(1.2)
 }
 
 .logic-gate-terminal-removeable {
@@ -181,6 +182,7 @@
     animation-duration: 0.5s;
     animation-direction: alternate;
     animation-iteration-count: infinite;
+    transform: scale(1.2);
 }
 
 .logic-gate-hidden {

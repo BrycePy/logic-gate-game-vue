@@ -1,7 +1,7 @@
 import { calculateOffset, isInside } from "./logicgate_front";
-import '@/assets/hintcursor.css';
-import $ from "jquery";
-import { Throttle } from "./utils";
+import "@/assets/hintcursor.css";
+// import $ from "jquery";
+import { sleep, Throttle } from "./utils";
 
 function addStackedAnimation(element, classname) {
   let newDiv = document.createElement("div");
@@ -10,6 +10,7 @@ function addStackedAnimation(element, classname) {
   newDiv.style.left = element.style.left;
   newDiv.style.width = element.style.width;
   newDiv.style.height = element.style.height;
+  newDiv.style.zIndex = element.style.zIndex;
   newDiv.style.pointerEvents = "none";
   element.style.top = "0px";
   element.style.left = "0px";
@@ -49,11 +50,11 @@ function moveStack(element, x, y) {
 }
 
 class CursorHint {
-  constructor(element, transitionDuration) {
+  constructor(element, transitionDuration, root) {
     this.transitionDuration = transitionDuration || 500;
     this.target = {};
     this.hintElement = null;
-    this.creatDomElement();
+    this.creatDomElement(root);
     this.currentAnimation = null;
 
     this.animations = {
@@ -101,7 +102,7 @@ class CursorHint {
     }, 200);
   }
 
-  creatDomElement() {
+  creatDomElement(root) {
     let element = document.createElement("img");
     element.src = "hintcursor_click.png";
     element.style.position = "absolute";
@@ -109,10 +110,11 @@ class CursorHint {
     element.style.left = "0px";
     element.style.width = "40px";
     element.style.height = "40px";
-    element.style.zIndex = 1000;
+    element.style.zIndex = 3000;
     element.style.pointerEvents = "none";
-    document.documentElement.appendChild(element);
     this.hintElement = element;
+    root = root || document.documentElement;
+    root.appendChild(element);
   }
 
   setAnimation(animation, replay) {
@@ -128,7 +130,7 @@ class CursorHint {
 
   moveToTarget() {
     let element = this.target;
-    if(this.hidden) return;
+    if (this.hidden) return;
     let offset = calculateOffset(element, document.documentElement);
     let x = offset.left;
     let y = offset.top;
@@ -181,9 +183,9 @@ class CursorHint {
 }
 
 class CursorHintSeries {
-  constructor(elements, transitionDuration) {
+  constructor(elements, transitionDuration, root) {
     this.elements = elements ? elements : [];
-    this.cursorHint = new CursorHint();
+    this.cursorHint = new CursorHint(undefined, undefined, root);
     this._finished = false;
     this.next();
   }
@@ -212,18 +214,18 @@ class CursorHintSeries {
     }
   }
 
-  clear(){
+  clear() {
     this.elements = [];
     this.next();
   }
 }
 
 class LogicCanvasHint {
-  constructor(logicCanvas) {
+  constructor(logicCanvas, root) {
     this.logicCanvas = logicCanvas;
     this.world = logicCanvas?.world;
     this.eventManager = logicCanvas?.eventManager;
-    this.cursorHintSeries = new CursorHintSeries([], 500);
+    this.cursorHintSeries = new CursorHintSeries([], 500, root);
     this.currentHintSolution = null;
   }
 
@@ -242,11 +244,13 @@ class LogicCanvasHint {
     this.cursorHintSeries.add(target);
   }
 
-  clear(){
+  clear() {
     this.cursorHintSeries.clear();
   }
 
-  async addGate(btnElement, gateType) {
+  async addGate(gateType, btnElement) {
+    btnElement = btnElement || $(`.add-${gateType.toLowerCase()}-btn`)[0];
+
     this.setSolution("addGate", { gateType: gateType });
 
     this.add({ element: btnElement, animation: "click" });
@@ -256,8 +260,24 @@ class LogicCanvasHint {
     this.next();
     return gate;
   }
+
   async removeGate(gate) {
     this.setSolution("removeGate", { gate: gate });
+
+    if (this.logicCanvas.showingModeSelector()) {
+      let modeSelectorBtn = this.logicCanvas.domElement.querySelector(
+        ".logic-gate-edit-mode-button"
+      );
+      console.log(modeSelectorBtn);
+      if (!this.logicCanvas.moveMode) {
+        this.add({ element: modeSelectorBtn, animation: "click" });
+        await this.eventManager.wait(
+          "CANVAS_EDIT_MODE_CHANGED",
+          (mode) => mode === "MOVING"
+        );
+        this.next();
+      }
+    }
 
     this.add({ element: gate.domElement, animation: "click" });
     let removedGate = await this.eventManager.wait(
@@ -269,6 +289,21 @@ class LogicCanvasHint {
   }
   async addWire(terminal1, terminal2, successEvent) {
     this.setSolution("addWire", { terminal1: terminal1, terminal2: terminal2 });
+
+    if (this.logicCanvas.showingModeSelector()) {
+      let modeSelectorBtn = this.logicCanvas.domElement.querySelector(
+        ".logic-gate-edit-mode-button"
+      );
+      console.log(modeSelectorBtn);
+      if (this.logicCanvas.moveMode) {
+        this.add({ element: modeSelectorBtn, animation: "click" });
+        await this.eventManager.wait(
+          "CANVAS_EDIT_MODE_CHANGED",
+          (mode) => mode === "WIRING"
+        );
+        this.next();
+      }
+    }
 
     this.add({
       element: terminal1.domElement,
@@ -324,6 +359,19 @@ class LogicCanvasHint {
   async moveGate(gate, x, y, width, height, originalGateOffset) {
     width = width == undefined ? 100 : width;
     height = height == undefined ? 100 : height;
+
+    const canvasWidth = $(this.logicCanvas.domElement).width();
+    const canvasHeight = $(this.logicCanvas.domElement).height();
+
+    console.log(canvasHeight, canvasWidth);
+
+    if (x >= 0 && x <= 1) {
+      x = x * canvasWidth - width / 2;
+    }
+    if (y >= 0 && y <= 1) {
+      y = y * canvasHeight - height / 2;
+    }
+
     this.setSolution("moveGate", {
       gate: gate,
       x: x,
@@ -332,18 +380,10 @@ class LogicCanvasHint {
       height: height,
     });
 
-    originalGateOffset = originalGateOffset || $(gate.domElement).offset();
-    this.add({ element: gate.domElement, animation: "drag" });
-    await this.eventManager.wait(
-      "CANVAS_GATE_MOVE_START",
-      (movedGate) => movedGate === gate
-    );
-    this.next();
-
     let targetRegion = document.createElement("div");
     targetRegion.style.position = "absolute";
-    targetRegion.style.top = `${y}px`;
-    targetRegion.style.left = `${x}px`;
+    targetRegion.style.top = `${(y / canvasHeight) * 100}%`;
+    targetRegion.style.left = `${(x / canvasWidth) * 100}%`;
     targetRegion.style.width = `${width}px`;
     targetRegion.style.height = `${height}px`;
     targetRegion.style.pointerEvents = "none";
@@ -354,10 +394,35 @@ class LogicCanvasHint {
     targetRegion.style.opacity = 0;
     targetRegion.style.transition = "opacity 0.5s";
     requestAnimationFrame(() => {
-      targetRegion.style.opacity = 1;
+      targetRegion.style.opacity = 0.5;
     });
-
     this.logicCanvas.domElement.appendChild(targetRegion);
+
+    if (this.logicCanvas.showingModeSelector()) {
+      let modeSelectorBtn = this.logicCanvas.domElement.querySelector(
+        ".logic-gate-edit-mode-button"
+      );
+      console.log(modeSelectorBtn);
+      if (!this.logicCanvas.moveMode) {
+        this.add({ element: modeSelectorBtn, animation: "click" });
+        await this.eventManager.wait(
+          "CANVAS_EDIT_MODE_CHANGED",
+          (mode) => mode === "MOVING"
+        );
+        this.next();
+      }
+    }
+
+    this.add({ element: gate.domElement, animation: "drag" });
+    await this.eventManager.wait(
+      "CANVAS_GATE_MOVE_START",
+      (movedGate) => movedGate === gate
+    );
+    originalGateOffset = originalGateOffset || $(gate.domElement).offset();
+    targetRegion.style.opacity = 1;
+
+    this.next();
+
     this.add({ element: targetRegion, animation: "point" });
 
     await this.eventManager.wait(
@@ -390,7 +455,9 @@ class LogicCanvasHint {
       },
       removeGate: () => {
         let gate = data.gate;
-        this.currentHintSolution = () => {
+        this.currentHintSolution = async () => {
+          this.eventManager.publish("CANVAS_EDIT_MODE_CHANGED", "MOVING");
+          await sleep(100);
           gate.remove();
         };
       },
@@ -405,16 +472,17 @@ class LogicCanvasHint {
           terminal2.domElement,
           this.logicCanvas.domElement
         );
-        this.currentHintSolution = () => {
+        this.currentHintSolution = async() => {
+          this.eventManager.publish("CANVAS_EDIT_MODE_CHANGED", "WIRING");
+          await sleep(100);
           this.world.clearSelction();
           this.world.makeConnection(terminal1);
           this.logicCanvas.mousePos = {
             x: (terminal1Offset.left + terminal2Offset.left) / 2,
             y: (terminal1Offset.top + terminal2Offset.top) / 2,
           };
-          setTimeout(() => {
-            this.world.makeConnection(terminal2);
-          }, 100);
+          await sleep(100);
+          this.world.makeConnection(terminal2);
         };
       },
       toggleInput: () => {
@@ -429,15 +497,16 @@ class LogicCanvasHint {
         let y = data.y;
         let dWidth = data.width - $(gate.domElement).outerWidth();
         let dHeight = data.height - $(gate.domElement).outerHeight();
-        this.currentHintSolution = () => {
+        this.currentHintSolution = async () => {
+          this.eventManager.publish("CANVAS_EDIT_MODE_CHANGED", "MOVING");
+          await sleep(100);
           this.eventManager.publish("CANVAS_GATE_MOVE_START", gate);
           gate.domElement.style.transition = "top 0.1s, left 0.1s";
           gate.domElement.style.top = `${y + dWidth / 2}px`;
           gate.domElement.style.left = `${x + dHeight / 2}px`;
-          setTimeout(() => {
-            gate.domElement.style.transition = "";
-            this.eventManager.publish("CANVAS_GATE_MOVE_END", gate);
-          }, 100);
+          await sleep(100);
+          gate.domElement.style.transition = "";
+          this.eventManager.publish("CANVAS_GATE_MOVE_END", gate);
         };
       },
     };

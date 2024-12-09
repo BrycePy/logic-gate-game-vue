@@ -266,6 +266,14 @@ class World {
 		return this.gates.filter(g => !this.inputs.includes(g) && !this.outputs.includes(g));
 	}
 
+	get in(){
+		return this.inputs;
+	}
+
+	get out(){
+		return this.outputs;
+	}
+
 	setDomElement(domElement) {
 		this.domElement = domElement;
 		this.eventManager.publish("WORLD_DOM_SET", this);
