@@ -52,6 +52,7 @@ worlds.forEach(world => {
         let id = `${world.name}.${level.name}`;
         level["world"] = world;
         level.id = id;
+        level.cardID = id.replace(/\W/g, '-')
         idToLevel[id] = level;
         if (previousLevel) {
             previousLevel.next = level;

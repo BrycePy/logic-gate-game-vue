@@ -83,7 +83,9 @@ import userData from '@/UserData';
 const handleBack = () => {
     console.log('back')
     hintCursor.clear();
-    mountApp(WorldSelection);
+    mountApp(WorldSelection, {
+        currentLevelID: level?.id
+    });
 }
 
 onBrowserBack(handleBack)
@@ -298,10 +300,13 @@ const handleRestart = () => {
 
 const handleNextLevel = async () => {
     let nextLevel = level.next;
-    await sleep(500)
-    handleBack();
-    await sleep(500)
-    mountApp(Play, nextLevel.id);
+    mountApp(WorldSelection, { 
+        currentLevelID: level?.id,
+        nextLevelID: nextLevel?.id
+    });
+    await sleep(2000)
+    mountApp(Play, nextLevel?.id);
+    $("html, body").animate({ scrollTop: 0 }, 100);
 }
 
 const debugExport = () => {

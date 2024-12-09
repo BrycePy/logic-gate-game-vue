@@ -11,6 +11,10 @@ import { idToLevel } from '@/levels/levels';
 import { hintCursor } from '@/main';
 import userData from '@/UserData';
 
+const callerData = getCallerArgs();
+const fromLevelID = callerData?.currentLevelID;
+const toLevelID = callerData?.nextLevelID;
+
 onBrowserBack(()=>{
     mountApp(MainMenu);
 })
@@ -27,6 +31,33 @@ onMounted(() => {
             element: startBtn,
             animation: 'click'
         });
+    }
+
+    if(fromLevelID){
+        const level = idToLevel[fromLevelID];
+        const nextLevel = idToLevel[toLevelID];
+        let levelCard = $('#card-'+level?.cardID);
+        let nextLevelCard = $('#card-'+nextLevel?.cardID);
+        let halfScreen = window.innerHeight / 4;
+        $('html, body').animate({
+            scrollTop: levelCard.offset().top - halfScreen
+        }, 100);
+        let originalColor = $(levelCard).css('background-color');
+        if(nextLevel){
+            setTimeout(()=>{
+                $('html, body').animate({
+                    scrollTop: nextLevelCard.offset().top - halfScreen
+                }, 100);
+            }, 1000)
+        }else{
+            $(levelCard).animate({
+                backgroundColor: 'rgba(200, 200, 200, 0.5)'
+            }, 1000, ()=>{
+                $(levelCard).animate({
+                    backgroundColor: originalColor
+                }, 5000);
+            });
+        }
     }
 
     allLevels.forEach(level => {
@@ -64,7 +95,7 @@ const handlePlay = (level) => {
                 <h1 class="world-title">{{ world.name }}</h1>
                 <div class="level-container">
                     <div v-for="level in world.levels" class="level">
-                        <div class="card" style="width: 18rem;">
+                        <div class="card" style="width: 18rem;" :id="'card-'+level.cardID">
                             <!-- <img class="card-img-top" src="..." alt="Card image cap"> -->
                             <div class="card-body">
                                 <h5 class="card-title">{{ level.name }}
@@ -112,9 +143,11 @@ const handlePlay = (level) => {
 
 @keyframes stamp {
     0% {
-        transform: scale(2);
+        opacity: 0;
+        transform: scale(5);
     }
     100% {
+        opacity: 1;
         transform: scale(1);
     }
 }
