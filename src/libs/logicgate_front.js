@@ -483,7 +483,10 @@ class LogicCanvas {
       }, 500);
     }
 
+    let __draggable_toggled = false;
     gate._makeDraggable = () => {
+      if (__draggable_toggled) return;
+      __draggable_toggled = true;
       $(clone).draggable({
         handle: ".logic-gate-body",
         distance: 15,
@@ -530,6 +533,9 @@ class LogicCanvas {
         },
       });
       $(clone).find(".logic-gate-body").addClass("logic-gate-body-active");
+      this.eventManager.once("GATE_REMOVED", (g) => {
+        $(clone).draggable("destroy");
+      }, (g)=> g === gate);
     }
 
     if (draggable) {
@@ -783,7 +789,6 @@ class LogicCanvas {
 
     this.eventManager.subscribe("GATE_REMOVED", (g)=>{
       if(g === gate){
-        console.log(gate);
         otherCanvas.remove();
       }
     })
@@ -810,7 +815,6 @@ class LogicCanvas {
       let terminalDom = document.createElement("div");
       terminalDom.classList.add("logic-gate-terminal");
       let gateInputsDom = $(gate.domElement).find(".logic-gate-input-terminal")[0];
-      console.log(gateInputsDom);
       gateInputsDom.appendChild(terminalDom);
       let terminal = new Terminal(gate.world, gate, false);
       terminal.setDomElement(terminalDom);
@@ -823,7 +827,6 @@ class LogicCanvas {
       let terminalDom = document.createElement("div");
       terminalDom.classList.add("logic-gate-terminal");
       let gateOutputsDom = $(gate.domElement).find(".logic-gate-output-terminal")[0];
-      console.log(gateOutputsDom);
       gateOutputsDom.appendChild(terminalDom);
       let terminal = new Terminal(gate.world, gate, true);
       terminal.setDomElement(terminalDom);
@@ -1058,7 +1061,7 @@ class LogicCanvas {
 
     let xScale = this.domElement.clientWidth / data.canvasSize.width;
     let yScale = this.domElement.clientHeight / data.canvasSize.height;
-    console.log(xScale, yScale);
+    // console.log(xScale, yScale);
 
     this.clear();
     let gates = {};
@@ -1161,6 +1164,7 @@ class LogicCanvas {
 
   remove() {
     this.clear();
+    clearInterval(this.scaleTrackerInterval);
     window.removeEventListener("resize", this.onResize);
     this.stopVisualTick();
     this.stopWorldTick();

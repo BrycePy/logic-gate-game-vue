@@ -51,6 +51,7 @@ class Terminal {
     this.relatedTerminals = [];
     if (this.domElement) {
       this.domElement.remove();
+      this.domElement = null;
     }
     if (this.world) {
       this.world.terminals = this.world.terminals.filter((t) => t !== this);
@@ -112,6 +113,7 @@ class Wire {
     this.world.eventManager.publish("WIRE_REMOVED", this);
     if (this.domElement) {
       this.domElement.remove();
+      this.domElement = null;
     }
   }
   getState() {
@@ -213,6 +215,7 @@ class Gate {
     this.outputTerminals.forEach((t) => t.remove());
     if (this.domElement) {
       this.domElement.remove();
+      this.domElement = null;
     }
     this.world.eventManager.publish("GATE_REMOVED", this);
   }
@@ -500,10 +503,15 @@ class World {
   }
 
   remove() {
+    this.eventManager.publish("WORLD_PRE_REMOVE", this);
     this.clear();
     if (this.domElement) {
       this.domElement.remove();
+      this.domElement = null;
     }
+    this.eventManager.publish("WORLD_REMOVED", this);
+    this.eventManager.destroy();
+    this.eventManager = null;
   }
 }
 

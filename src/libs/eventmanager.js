@@ -63,6 +63,10 @@ class EventManager {
 	setUpstreamEventManager(upstream) {
 		this.upstream = upstream;
 	}
+	destroy() {
+		this.events = {};
+		this.eventsAll = [];
+	}
 }
 
 export default EventManager;

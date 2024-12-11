@@ -72,6 +72,10 @@ const createCanvasWindow = (logicCanvas) => {
     appContainer.appendChild(newDiv);
     logicCanvas.updateCanvas();
 
+    logicCanvas.eventManager.once("WORLD_PRE_REMOVE", () => {
+        deleteCanvasWindow(logicCanvas);
+    })
+
     let closeButton = newDiv.querySelector('.close-btn');
     closeButton.addEventListener('click', () => {
         deleteCanvasWindow(logicCanvas);
@@ -126,7 +130,7 @@ onMounted(async () => {
     logicCanvas.eventManager.subscribeBubble('CANVAS_WORLD_LINKED', (info) => {
         let gate = info.data;
         if (gate.funcSpec.name === 'WORLD') {
-            console.log("WORLD GATE LINKED", gate);
+            // console.log("WORLD GATE LINKED", gate);
             linkedGateSetup(gate);
         }
     })
@@ -177,6 +181,8 @@ onBeforeUnmount(() => {
     logicCanvas.stopWorldTick();
     logicCanvas.remove();
     console.log('sandbox destroyed')
+
+    $.ui.ddmanager.current = null;
 })
 
 const debugExport = () => {
@@ -212,26 +218,32 @@ const contextMenu = {
     newWindowRef: null,
     targetGate: null,
     onDelete: () => {
-        $(".linked-gate-context-menu").removeClass('show');
         contextMenu.targetGate.remove();
+        contextMenu.reset();
     },
     onSeeInside: () => {
-        $(".linked-gate-context-menu").removeClass('show');
         let newWindow = createCanvasWindow(contextMenu.targetLogicCanvas);
         contextMenu.newWindowRef.value = newWindow;
+        contextMenu.reset();
     },
     onDuplicate: () => {
-        $(".linked-gate-context-menu").removeClass('show');
         let buffer = document.querySelector('.hidden-logic-canvas-buffer');
         let otherCanvas = contextMenu.targetLogicCanvas;
         let exportData = otherCanvas.export(true);
         logicCanvas.importAsGate(exportData, 0.5, 0.5, buffer);
+        contextMenu.reset();
     },
     onCopy: () => {
-        $(".linked-gate-context-menu").removeClass('show');
         let otherCanvas = contextMenu.targetLogicCanvas;
         let exportData = otherCanvas.export(true);
         localStorage.setItem('copiedGate', exportData);
+        contextMenu.reset();
+    },
+    reset: () => {
+        $(".linked-gate-context-menu").removeClass('show');
+        contextMenu.targetLogicCanvas = null;
+        contextMenu.newWindowRef = null;
+        contextMenu.targetGate = null;
     }
 }
 
