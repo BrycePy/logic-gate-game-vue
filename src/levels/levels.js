@@ -1,11 +1,13 @@
-import SmartHomeDev from "./Intermediate/smarthomedev.vue";
 import Tutorial from "@/pages/Tutorial.vue";
 import andLevel from "./basic/letsmakenand1";
 import nothingLevel from "./basic/nothing.vue";
-import SmartHome1 from "./Intermediate/smarthome1.vue";
-import SmartHome2 from "./Intermediate/smarthome2.vue";
-import SmartHome3 from "./Intermediate/smarthome3.vue";
-import SmartHome4 from "./Intermediate/smarthome4.vue";
+import SmartHomeDev from "./smarthome/smarthomedev.vue";
+import SmartHome1 from "./smarthome/smarthome1.vue";
+import SmartHome2 from "./smarthome/smarthome2.vue";
+import SmartHome3 from "./smarthome/smarthome3.vue";
+import SmartHome4 from "./smarthome/smarthome4.vue";
+import random2in from "./basic/random2in.vue";
+import random3in from "./basic/random3in.vue";
 
 console.log("vue",nothingLevel);
 
@@ -18,30 +20,23 @@ const worlds = [
         nothingLevel,
         andLevel,
     ]},
-    {name: "Intermediate", description: "Intermediate level", levels: [
+    {name: "Smart Home", description: "smarthome level", levels: [
         // SmartHomeDev,
         SmartHome1,
         SmartHome2,
         SmartHome3,
         SmartHome4
     ]},
-    {name: "Advanced", description: "Advanced level", levels: [
+    {name: "Intermediate", description: "Intermediate level", levels: [
+        random2in,
+        random3in,
+    ]},
+    {name: "Others", description: "Advanced level", levels: [
         {name: "Level 4", description: "Level 4Level 1Level 1Level 1Level 1Level 1Level 1"},
         {name: "Level 5", description: "Level 5Level 2Level 2Level 2Level 2Level 2Level 2"},
         {name: "Level 6", description: "Level 6Level 3Level 3Level 3Level 3Level 3Level 3"},
         {name: "Level 6", description: "Level 6Level 3Level 3Level 3Level 3Level 3Level 3"},
         {name: "Level 6", description: "Level 6Level 3Level 3Level 3Level 3Level 3Level 3"},
-    ]},
-    {name: "Expert", description: "Expert level", levels: [
-        {name: "Level 7", description: "Level 7Level 1Level 1Level 1Level 1Level 1Level 1"},
-        {name: "Level 8", description: "Level 8Level 2Level 2Level 2Level 2Level 2Level 2"},
-        {name: "Level 9", description: "Level 9Level 3Level 3Level 3Level 3Level 3Level 3"},
-        {name: "Level 7", description: "Level 7Level 1Level 1Level 1Level 1Level 1Level 1"},
-        {name: "Level 8", description: "Level 8Level 2Level 2Level 2Level 2Level 2Level 2"},
-        {name: "Level 9", description: "Level 9Level 3Level 3Level 3Level 3Level 3Level 3"},
-        {name: "Level 7", description: "Level 7Level 1Level 1Level 1Level 1Level 1Level 1"},
-        {name: "Level 8", description: "Level 8Level 2Level 2Level 2Level 2Level 2Level 2"},
-        {name: "Level 9", description: "Level 9Level 3Level 3Level 3Level 3Level 3Level 3"},
     ]},
 ]
 

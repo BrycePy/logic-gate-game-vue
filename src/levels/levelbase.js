@@ -2,6 +2,8 @@ class LevelBase {
     constructor(data) {
         this.name = data.name;
         this.description = data.description;
+        this.inputs = data.inputs;
+        this.outputs = data.outputs;
         this.availableGates = data.availableGates;
         this.maxGateCount = data.maxGateCount;
         this.timeLimit = data.timeLimit;
@@ -13,14 +15,11 @@ class LevelBase {
         this.hints = data.hints;
         // this.template = data.template;
 
-        if(!data.name) {
+        if(data.name === undefined) {
             throw new Error("Level must have a name");
         }
-        if(!data.description) {
+        if(data.description === undefined) {
             throw new Error("Level must have a description");
-        }
-        if(!data.availableGates) {
-            throw new Error("Level must have availableGates");
         }
     }
 
@@ -36,20 +35,19 @@ export { LevelBase };
 class TruthTableLevel extends LevelBase {
     constructor(data) {
         super(data);
-        this.inputs = data.inputs;
-        this.outputs = data.outputs;
         this.truthTableFn = data.truthTable;
+        this.truthTable;
 
         if(typeof this.truthTableFn !== 'function'){
             this.truthTableFn = ()=>data.truthTable;
         }else{
             this.truthTableFn = this.truthTableFn;
         }
+        this.calculateTruthTable();
     }
 
-    get truthTable() {
-        console.log(this.truthTableFn());
-        return this.truthTableFn();
+    calculateTruthTable() {
+        this.truthTable = this.truthTableFn();
     }
 }
 export { TruthTableLevel };

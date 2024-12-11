@@ -7,6 +7,8 @@ const data = {
     name: 'Smart Home 2',
     description: 'Comprehensive Coverage - Integrate multiple motion sensors for complete room coverage.',
     availableGates: ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'],
+    inputs: ['M1', 'M2', 'M3', 'M4'],
+    outputs: ['Light'],
     hideSubmit: false,
     timeLimit: 60,
     maxGateCount: 3
@@ -35,17 +37,14 @@ onMounted(async () => {
     sim.addMotionSensor(-10, -10); // M3
     sim.addMotionSensor(10, -10); // M4
 
-    logicCanvas.createInput()
-    logicCanvas.createInput()
-    logicCanvas.createInput()
-    logicCanvas.createInput()
-    logicCanvas.createOutput()
+    // logicCanvas.createInput()
+    // logicCanvas.createInput()
+    // logicCanvas.createInput()
+    // logicCanvas.createInput()
+    // logicCanvas.createOutput()
 
     setTimeout(() => {
         sim.linkLight(world.outputs[0].in(0));
-        ['M1', 'M2', 'M3', 'M4'].forEach((label, i) => {
-            logicCanvas.world.gates[i].setLabel(label);
-        });
     }, 1000);
 })
 

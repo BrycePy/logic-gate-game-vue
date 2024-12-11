@@ -1,5 +1,7 @@
 <script>
-import { inject, onBeforeUnmount, onMounted, ref } from 'vue';
+import { setCallerArgs } from '@/libs/utils';
+import { getCurrentInstance, inject, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue';
+
 </script>
 
 <script setup>
@@ -13,24 +15,31 @@ const inputs = ttLevelData.inputs;
 const outputs = ttLevelData.outputs;
 const tableHeader = [...inputs, ...outputs]
 const actualOutputs = ref(ttLevelData.truthTable.map(testCase => [...testCase.outputs]));
+const rttLevelData = reactive(ttLevelData);
+const instance = getCurrentInstance();
+
+// const levelVue = useTemplateRef('levelVue');
+// levelVue.provide('parent', getCurrentInstance());
+
+setCallerArgs(()=>{
+    resetTableColor();
+    actualOutputs.value = ttLevelData.truthTable.map(testCase => [...testCase.outputs]);
+    console.log("reset", actualOutputs.value);
+    instance.proxy.$forceUpdate();
+})
 
 onMounted(() => {
-    logicCanvas.clear();
-    ttLevelData.inputs.forEach(input => {
-        logicCanvas.createInput().setLabel(input);
-    });
-    ttLevelData.outputs.forEach(output => {
-        logicCanvas.createOutput().setLabel(output);
-    });
 })
 
 const run = async (testCaseIndex) => {
+    let rowElement = $(".table-test-case").find('tbody tr').eq(testCaseIndex)
+    rowElement.addClass('table-primary');
+
     let testCase = ttLevelData.truthTable[testCaseIndex];
     let inputs = testCase.inputs;
     let outputs = testCase.outputs;
     let result = await world.evaluate(inputs);
     result = result.map(output => output? 1: 0);
-
     let allMatch = true;
     result.forEach((actual, index) => {
         let expected = outputs[index];
@@ -42,10 +51,13 @@ const run = async (testCaseIndex) => {
         }
     });
 
+    rowElement.removeClass('table-primary');
+    rowElement.removeClass('table-success');
+    rowElement.removeClass('table-danger');
     if(allMatch){
-        $(".table-test-case").find('tbody tr').eq(testCaseIndex).addClass('table-success');
+        rowElement.addClass('table-success');
     } else {
-        $(".table-test-case").find('tbody tr').eq(testCaseIndex).addClass('table-danger');
+        rowElement.addClass('table-danger');
     }
 
     console.log("result", inputs, outputs, result);
@@ -70,15 +82,8 @@ const resetTableColor = () => {
 }
 
 const handleTestClick = async (testCaseIndex, e) => {
-    let rowElement = e.target.parentElement;
     resetTableColor();
-    ttLevelData.truthTable.forEach((tc, tcIndex) => {
-        tc.outputs.forEach((output, index) => {
-            actualOutputs.value[tcIndex][index] = output;
-        });
-    });
-    
-    rowElement.classList.toggle('table-primary');
+    actualOutputs.value = ttLevelData.truthTable.map(testCase => [...testCase.outputs]);
     await run(testCaseIndex)
 }
 
@@ -92,7 +97,7 @@ defineExpose({
 <template>
     <p>{{ ttLevelData.description }}</p>
     <!-- <data.template v-if="data.template" /> -->
-    <ttLevelData v-if="ttLevelData.render"></ttLevelData>
+    <ttLevelData v-if="ttLevelData.render" ref="levelVue"></ttLevelData>
     <div class="test-case-table-container">
         <table class="table table-dark table-hover text-center table-striped table-test-case">
             <thead>
@@ -101,10 +106,10 @@ defineExpose({
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="testCase, i in ttLevelData.truthTable" class="table-test-case-row"
+                <tr v-for="testCase, i in rttLevelData.truthTable" class="table-test-case-row"
                     @click="(e) => { handleTestClick(i, e) }">
                     <td v-for="cell in testCase.inputs">{{ cell }}</td>
-                    <td v-for="cell in actualOutputs[i]">{{ cell }}</td>
+                    <td v-for="cell in actualOutputs[i] || testCase.outputs">{{ cell }}</td>
                 </tr>
             </tbody>
         </table>
@@ -124,6 +129,10 @@ defineExpose({
     border-radius: 1em;
     padding: 0;
     overflow: hidden;
+}
+
+:global(.table-test-case-row td) {
+    transition: background-color 0.5s;
 }
 
 </style>

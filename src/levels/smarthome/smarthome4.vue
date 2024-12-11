@@ -7,6 +7,8 @@ const data = {
     name: 'Smart Home 4',
     description: 'Movie Time Setup - Introduce a switch to deactivate motion sensors while maintaining an override for continuous light.',
     availableGates: ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'],
+    inputs: ['M1', 'M2', 'M3', 'M4', 'A', 'S'],
+    outputs: ['Light'],
     hideSubmit: false,
     timeLimit: 120,
     maxGateCount: 5
@@ -34,21 +36,18 @@ onMounted(async () => {
     sim.addMotionSensor(-10, -10); // M3
     sim.addMotionSensor(10, -10); // M4
 
-    logicCanvas.createInput().setLabel('M1');
-    logicCanvas.createInput().setLabel('M2');
-    logicCanvas.createInput().setLabel('M3');
-    logicCanvas.createInput().setLabel('M4');
-    logicCanvas.createInput().setLabel('A');
-    logicCanvas.createInput().setLabel('S');
-    logicCanvas.createOutput().setLabel('Light');
+    // logicCanvas.createInput().setLabel('M1');
+    // logicCanvas.createInput().setLabel('M2');
+    // logicCanvas.createInput().setLabel('M3');
+    // logicCanvas.createInput().setLabel('M4');
+    // logicCanvas.createInput().setLabel('A');
+    // logicCanvas.createInput().setLabel('S');
+    // logicCanvas.createOutput().setLabel('Light');
 
     setTimeout(() => {
         inputcb = sim.addLinkedSwitch("A", world.inputs[4].out(0));
         inputcb = sim.addLinkedSwitch("S", world.inputs[5].out(0));
         sim.linkLight(world.outputs[0].in(0));
-        ['M1', 'M2', 'M3', 'M4', 'A', 'S'].forEach((label, i) => {
-            logicCanvas.world.gates[i].setLabel(label);
-        });
     }, 1000);
 })
 

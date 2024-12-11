@@ -7,6 +7,8 @@ const data = {
     name: 'Smart Home 3',
     description: 'Override Mode - Add a switch to ensure the light stays on continuously when desired.',
     availableGates: ['NOT', 'AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'],
+    inputs: ['M1', 'M2', 'M3', 'M4', 'S'],
+    outputs: ['Light'],
     hideSubmit: false,
     timeLimit: 60,
     maxGateCount: 4
@@ -34,19 +36,9 @@ onMounted(async () => {
     sim.addMotionSensor(-10, -10); // M3
     sim.addMotionSensor(10, -10); // M4
 
-    logicCanvas.createInput().setLabel('M1');
-    logicCanvas.createInput().setLabel('M2');
-    logicCanvas.createInput().setLabel('M3');
-    logicCanvas.createInput().setLabel('M4');
-    logicCanvas.createInput().setLabel('S');
-    logicCanvas.createOutput().setLabel('Light');
-
     setTimeout(() => {
         inputcb = sim.addLinkedSwitch("S", world.inputs[4].out(0));
         sim.linkLight(world.outputs[0].in(0));
-        ['M1', 'M2', 'M3', 'M4', 'S'].forEach((label, i) => {
-            logicCanvas.world.gates[i].setLabel(label);
-        });
     }, 1000);
 })
 

@@ -1,12 +1,13 @@
 <script>
 const populateGateDeck = (logicCanvas, gates) => {
-    gates = [...gates, 'UNKNOWN', 'UNKNOWN1']
+    // gates = [...gates, 'UNKNOWN', 'UNKNOWN1']
     let gateDeck = document.querySelector('.logic-gate-deck');
     gates.forEach(gate => {
         let gateDiv = logicCanvas.getGateTemplate(gate);
         let clone = gateDiv.cloneNode(true);
         clone.classList.add('gate-deck-item');
         clone.classList.add(`add-${gate.toLowerCase()}-btn`);
+
 
         let gateContainer = document.createElement('div');
         gateContainer.classList.add('gate-deck-item-container');
@@ -17,7 +18,11 @@ const populateGateDeck = (logicCanvas, gates) => {
         title.innerText = gate;
         gateContainer.appendChild(title);
 
-        gateDeck.appendChild(gateContainer);
+        let gateContainerScale = document.createElement('div');
+        gateContainerScale.classList.add('gate-deck-item-scale');
+        gateContainerScale.appendChild(gateContainer);
+        gateDeck.appendChild(gateContainerScale);
+
         clone.addEventListener('click', async (e) => {
             let gateObj = logicCanvas.createGate(gate);
             let originalOffset = $(gateObj.domElement).offset();
@@ -121,6 +126,8 @@ const paintTimer = () => {
     let userTimeStr = timer.getElapsedTimeStr();
     let timeLimitStr = level.timeLimit ? timer.getElapsedTimeStr(level.timeLimit) : '∞';
     let timerDiv = document.querySelector('.level-timer');
+    let newText = `${userTimeStr} / ${timeLimitStr}`;
+    if (timerDiv.innerText == newText) return;
     timerDiv.innerText = `${userTimeStr} / ${timeLimitStr}`;
 }
 
@@ -153,13 +160,22 @@ onMounted(async () => {
         logicCanvas.startWorldTick(20);
         logicCanvas.world.enableAutoSleep();
 
+        logicCanvas.clear();
+        level.inputs?.forEach(input => {
+            logicCanvas.createInput().setLabel(input);
+        });
+        level.outputs?.forEach(output => {
+            logicCanvas.createOutput().setLabel(output);
+        });
+
         paintTimerInterval = setInterval(paintTimer, 100);
 
         populateGateDeck(logicCanvas, level.availableGates || [
             'AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR'
         ]);
+
         const el = document.querySelector(".logic-canvas-container")
-        const threshold = 0.95;
+        const threshold = 0.99;
         const observer = new IntersectionObserver(
             ([e]) => {
                 let state = e.intersectionRatio < threshold && e.boundingClientRect.y <= 10;
@@ -178,7 +194,6 @@ onMounted(async () => {
     }
 
     if (level instanceof TruthTableLevel) {
-        console.log(level)
         challengeApp = createApp(truthtableleveltemplate);
         challengeApp.provide('logicCanvas', logicCanvas);
         challengeApp.provide('truthTableLevelData', level);
@@ -195,18 +210,35 @@ onMounted(async () => {
         }, 200)
     }
 
+    timer.start();
+
     let userAttemptCanvas = userData.getAttempt(level.id, 'canvas');
     let userAttemptTime = userData.getAttempt(level.id, 'time');
     if (userAttemptCanvas) {
+        let savedInputCount = userAttemptCanvas.gates.filter(gate => gate.isWorldInput).length;
+        let savedOutputCount = userAttemptCanvas.gates.filter(gate => gate.isWorldOutput).length;
+        let currentInputCount = level.inputs.length;
+        let currentOutputCount = level.outputs.length;
+        if (savedInputCount != currentInputCount) return;
+        if (savedOutputCount != currentOutputCount) return;
         setTimeout(() => {
             logicCanvas.load(userAttemptCanvas);
+            level.inputs?.forEach((input, i) => {
+                logicCanvas.world.inputs[i].setLabel(input);
+            });
+            level.outputs?.forEach((output, i) => {
+                logicCanvas.world.outputs[i].setLabel(output);
+            });
             timer.set(userAttemptTime);
             timer.pause();
             continueTimerOnUpdate();
         }, 500)
-    } else {
-        timer.start();
     }
+
+    await sleep(500);
+    $("html, body").animate({
+        scrollTop: $("#challenge").offset().top - 350
+    }, 100);
 })
 
 onBeforeUnmount(() => {
@@ -268,7 +300,7 @@ const onSubmit = async () => {
         let timeStar = level.timeLimit ? timeUser <= level.timeLimit : true;
 
         let gateCount = logicCanvas.world.nonIOGates.length;
-        let gateLimit = level.maxGateCount == undefined ? "∞": level.maxGateCount;
+        let gateLimit = level.maxGateCount == undefined ? "∞" : level.maxGateCount;
         resultModalData.value[2].text = `# of Gates: ${gateCount} / ${gateLimit}`;
         let gateStar = level.maxGateCount == undefined ? true : gateCount <= level.maxGateCount;
 
@@ -300,7 +332,7 @@ const handleRestart = () => {
 
 const handleNextLevel = async () => {
     let nextLevel = level.next;
-    mountApp(WorldSelection, { 
+    mountApp(WorldSelection, {
         currentLevelID: level?.id,
         nextLevelID: nextLevel?.id
     });
@@ -375,7 +407,7 @@ const debugExport = () => {
                 <div class="challenge-container">
                     <h2>Chellenge:</h2>
                     <div id="challenge" ref="test"></div>
-                    <div class="testdummy"></div>
+                    <!-- <div class="testdummy"></div> -->
                 </div>
             </div>
         </div>
@@ -408,8 +440,8 @@ const debugExport = () => {
 </template>
 
 <style scoped>
-:global(.tooltip){
-    z-index: 1000;
+:global(.tooltip) {
+    --bs-tooltip-zindex: 1 !important;
 }
 
 .app-container {
@@ -452,20 +484,6 @@ const debugExport = () => {
 
 .result-star-fill {
     animation: stamp 1s;
-}
-
-:global(.gate-deck-item-container) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0em;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 1em;
-}
-
-:global(.gate-deck-item-title) {
-    display: block;
-    font-size: 1.2em;
 }
 
 .canvas-info-tooltip {
@@ -526,6 +544,7 @@ const debugExport = () => {
 
 
 .logic-canvas-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -540,10 +559,10 @@ const debugExport = () => {
     z-index: 100;
 }
 
-.logic-gate-deck {
-    gap: 0.5em;
+:global(.logic-gate-deck) {
+    /* height: 70%; */
+    gap: 0.3em;
     padding: 0.5em;
-    scale: 0.7;
     background-color: rgba(100, 100, 100, 0.2);
     border-radius: 1em;
     display: flex;
@@ -551,7 +570,29 @@ const debugExport = () => {
     justify-content: center;
     align-items: center;
     z-index: 10;
+    margin: 1em;
+    transform: scale(0.7, 0.7);
+    /* transform-origin: 50% 0%;
+    height: calc(70%); */
 }
+
+:global(.gate-deck-item-scale) {}
+
+:global(.gate-deck-item-container) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0em;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 1em;
+}
+
+:global(.gate-deck-item-title) {
+    display: block;
+    font-size: 1em;
+}
+
+:global(.gate-deck-item) {}
 
 .undo-btn {
     display: none;
@@ -559,10 +600,6 @@ const debugExport = () => {
 
 .deck-btns {
     order: 1;
-}
-
-.gate-deck-item {
-    display: inline-block;
 }
 
 .challenge-container {
@@ -588,12 +625,17 @@ const debugExport = () => {
 
 <style scoped>
 @media screen and (max-width: 500px) {
+    .app-container {
+        margin-bottom: 10em;
+    }
+
     .logic-canvas-container {
         position: sticky;
         top: calc(400px * -0.3);
     }
 
     .logic-gate-deck {
+        width: calc(100%/0.7);
         transition: opacity 0.5s, transform 0.5s, height 0.5s;
     }
 
@@ -623,13 +665,13 @@ const debugExport = () => {
 
     .is-pinned .logic-canvas-here {
         border: 1px solid #666;
-        z-index: 1000 !important;
+        z-index: 1004 !important;
         background-color: rgba(50, 50, 50, 0.9);
         pointer-events: auto;
     }
 
     .is-pinned .logic-gate-deck {
-        transform: translateY(-200px);
+        transform: translateY(-200px) scale(0.2, 0.2);
         opacity: 0;
         pointer-events: none;
         order: 2;
@@ -639,6 +681,7 @@ const debugExport = () => {
         transform: translateY(-20px);
         pointer-events: auto;
         order: 1;
+        z-index: 1005;
     }
 
     .challenge-container {
@@ -661,7 +704,7 @@ const debugExport = () => {
 
 .app-inner {
     display: grid;
-    grid-template-columns: 1fr;
+    /* grid-template-columns: 1fr; */
     max-width: none;
     width: 100%;
     margin: 0;
@@ -673,7 +716,7 @@ const debugExport = () => {
 @media (min-width: 1400px) {
     .app-inner {
         display: grid;
-        grid-template-columns: auto 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 
     .logic-canvas-container {

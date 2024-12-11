@@ -1,6 +1,0 @@
-<template>
-    <div>
-        <h1>Test Template</h1>
-        <p>This is a test template</p>
-    </div>
-</template>

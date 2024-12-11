@@ -483,8 +483,14 @@ class LogicCanvas {
     gate.setLabel = (text) => {
       let div = gate.domElement;
       let label = $(div).find(".logic-gate-label")[0];
-      label.innerHTML = text;
+      label.innerText = text;
     };
+
+    gate.getLabel = () => {
+      let div = gate.domElement;
+      let label = $(div).find(".logic-gate-label")[0];
+      return label.innerText;
+    }
 
     gate.inputTerminals.forEach((terminal, i) => {
       terminal.setDomElement(inputsTerminals[i]);
@@ -889,6 +895,7 @@ class LogicCanvas {
             width: gate._linkedWorld.domElement.clientWidth,
             height: gate._linkedWorld.domElement.clientHeight,
           },
+          // label: gate.getLabel(),
         });
       } else if (gate.isFundamental()) {
         gateExport.push({
@@ -899,6 +906,7 @@ class LogicCanvas {
           state: gate.getState(),
           isWorldInput: this.world.inputs.includes(gate),
           isWorldOutput: this.world.outputs.includes(gate),
+          // label: gate.getLabel(),
         });
       } else {
         console.error("Unknown gate type");
@@ -957,17 +965,21 @@ class LogicCanvas {
         let gate = this.linkWorld(world, x, y);
         gates[gateData.id] = gate;
         gates[gateData.id].setState(gateData.state);
+        // gateData.label && gate.setLabel(gateData.label);
       } else if (FundamentalGate[gateData.type] !== undefined) {
         let x = parseInt(gateData.x) * xScale;
         let y = parseInt(gateData.y) * yScale;
+        let gate;
         if (gateData.isWorldInput) {
-          gates[gateData.id] = this.createInput();
+          gate = this.createInput();
         } else if (gateData.isWorldOutput) {
-          gates[gateData.id] = this.createOutput();
+          gate = this.createOutput();
         } else {
-          gates[gateData.id] = this.createGate(gateData.type, x, y);
+          gate = this.createGate(gateData.type, x, y);
         }
+        gates[gateData.id] = gate;
         gates[gateData.id].setState(gateData.state);
+        // gateData.label && gate.setLabel(gateData.label);
       } else {
         console.error("Unknown gate type", gateData);
         return;

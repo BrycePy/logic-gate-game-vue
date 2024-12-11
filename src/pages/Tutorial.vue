@@ -420,35 +420,4 @@ onBeforeUnmount(() => {
     gap: 2em;
     font-weight: normal;
 }
-
-.gate-deck-item {
-    display: inline-block;
-}
-
-.logic-gate-deck {
-    gap: 0.5em;
-    padding: 0.5em;
-    scale: 0.7;
-    background-color: rgba(100, 100, 100, 0.2);
-    border-radius: 1em;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-}
-
-:global(.gate-deck-item-container) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0em;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 1em;
-}
-
-:global(.gate-deck-item-title) {
-    display: block;
-    font-size: 1.2em;
-}
 </style>

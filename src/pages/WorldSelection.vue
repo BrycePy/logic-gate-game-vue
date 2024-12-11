@@ -45,6 +45,7 @@ onMounted(() => {
         let originalColor = $(levelCard).css('background-color');
         if(nextLevel){
             setTimeout(()=>{
+                nextLevelCard.addClass('go-in-to-animation');
                 $('html, body').animate({
                     scrollTop: nextLevelCard.offset().top - halfScreen
                 }, 100);
@@ -55,7 +56,7 @@ onMounted(() => {
             }, 1000, ()=>{
                 $(levelCard).animate({
                     backgroundColor: originalColor
-                }, 5000);
+                }, 3000);
             });
         }
     }
@@ -72,10 +73,10 @@ onBeforeUnmount(()=>{
 })
 
 const handlePlay = (level) => {
+    $("html, body").animate({ scrollTop: 0 }, 10);
     if(level.goToPage){
         mountApp(level.goToPage);
     }else{
-        $("html, body").animate({ scrollTop: 0 }, 10);
         mountApp(Play, level.id);
     }
 }
@@ -175,6 +176,13 @@ const handlePlay = (level) => {
 
 .star-animate div:nth-child(3) .result-star-fill {
     animation: spin 4s;
+}
+
+.go-in-to-animation {
+    transition: transform 2s, background-color 2s;
+    transform: scale(1.1);
+    z-index: 10000 !important;
+    background-color: rgba(200, 200, 200, 0.5);
 }
 
 @media (min-width: 600px) {

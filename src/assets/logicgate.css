@@ -203,6 +203,7 @@
 
 .logic-in-template, .logic-out-template {
     background-color: #333;
+    transition: background-color 0.2s;
 }
 
 .logic-in-template:has(.logic-gate-terminal-on) {

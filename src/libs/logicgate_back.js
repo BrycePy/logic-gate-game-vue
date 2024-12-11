@@ -181,7 +181,7 @@ class Gate {
 
 	setState(states) {
 		states.forEach((state, i) => {
-			this.terminals()[i].state = state ? State.ON : State.OFF;
+			this.terminals()[i].setState(state ? State.ON : State.OFF);
 		});
 	}
 
