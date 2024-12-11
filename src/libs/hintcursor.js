@@ -309,14 +309,14 @@ class LogicCanvasHint {
       element: terminal1.domElement,
       animation: "click",
     });
-    await this.eventManager.wait("WORLD_TERMINAL_SELECTED", (connection) => {
-      if (connection.from === terminal2) {
+    await this.eventManager.wait("WORLD_TERMINAL_SELECTED", (terminal) => {
+      if (terminal === terminal2) {
         this.cursorHintSeries.cursorHint.setAnimation("click", true);
         let temp = terminal1;
         terminal1 = terminal2;
         terminal2 = temp;
       }
-      let test = connection.from === terminal1 || connection.from === terminal2;
+      let test = terminal === terminal1 || terminal === terminal2;
       if (!test) {
         setTimeout(() => {
           this.world.clearSelection();

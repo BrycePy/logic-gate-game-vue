@@ -19,12 +19,11 @@ const onBrowserBack = (callback) => {
 
 export { onBrowserBack };
 
-
 const _mountApp = async (app) => {
   app.mount("#app");
-  setTimeout(()=>{
-    zoomOutMobile();
-  }, 250)
+  setTimeout(() => {
+    zoomOutDevice();
+  }, 250);
 };
 
 const _unmountApp = async (app) => {
@@ -55,7 +54,7 @@ const mountApp = async (appVue, data) => {
 };
 const setCallerArgs = (data) => {
   callerArgs = data;
-}
+};
 const getCallerArgs = () => {
   return callerArgs;
 };
@@ -98,34 +97,49 @@ const setupLifecycleNotifier = (eventManager, data) => {
   //   console.log("unmounted", data);
   //   eventManager.publish("unmounted", data);
   // });
-}
+};
 
 export { setupLifecycleNotifier };
 
-function zoomOutMobile() {
+function zoomOutDevice() {
   var viewport = document.querySelector('meta[name="viewport"]');
 
-  if ( viewport ) {
+  var deviceWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
+  console.log(deviceWidth);
+
+  if (deviceWidth <= 500) {
     viewport.content = "initial-scale=0.1";
     viewport.content = "width=500";
+  } else if (deviceWidth <= 1000) {
+    viewport.content = "initial-scale=0.1";
+    viewport.content = "width=800";
+  } else {
+    viewport.content = "initial-scale=0.1";
+    viewport.content = "width=1400";
   }
 }
 
-export { zoomOutMobile };
+export { zoomOutDevice as zoomOutMobile };
 
 function timeStrFromSeconds(seconds) {
   let minutes = Math.floor(seconds / 60);
   let secs = Math.floor(seconds % 60);
-  return `${minutes}:${secs.toString().padStart(2, '0')}`
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
 
 export { timeStrFromSeconds };
 
-function calculateIntersectionRatio(element1, element2){
+function calculateIntersectionRatio(element1, element2) {
   let rect1 = element1.getBoundingClientRect();
   let rect2 = element2.getBoundingClientRect();
-  let xOverlap = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left));
-  let yOverlap = Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
+  let xOverlap = Math.max(
+    0,
+    Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left)
+  );
+  let yOverlap = Math.max(
+    0,
+    Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top)
+  );
   let overlapArea = xOverlap * yOverlap;
   let area1 = rect1.width * rect1.height;
   let area2 = rect2.width * rect2.height;
@@ -134,63 +148,62 @@ function calculateIntersectionRatio(element1, element2){
 
 export { calculateIntersectionRatio };
 
-class Timer{
-  constructor(){
+class Timer {
+  constructor() {
     this.startTime = 0;
     this.elapsedTimeAtPause = 0;
     this.paused = false;
   }
-  start(){
-    if(this.paused){
+  start() {
+    if (this.paused) {
       this.startTime = Date.now() - this.elapsedTimeAtPause;
-      this.paused = false
-    }else{
+      this.paused = false;
+    } else {
       this.startTime = this.startTime || Date.now();
     }
   }
 
-  pause(){
-    if(this.paused) return;
+  pause() {
+    if (this.paused) return;
     this.elapsedTimeAtPause = Date.now() - this.startTime;
     this.paused = true;
   }
 
-  set(timeElapsedSec){
-    if(this.paused){
+  set(timeElapsedSec) {
+    if (this.paused) {
       this.elapsedTimeAtPause = timeElapsedSec * 1000;
-    }else{
+    } else {
       this.startTime = Date.now() - timeElapsedSec * 1000;
     }
   }
 
-  reset(){
+  reset() {
     this.startTime = 0;
     this.elapsedTimeAtPause = 0;
     this.paused = false;
   }
 
-  getElapsedTime(){
-    if(this.paused){
+  getElapsedTime() {
+    if (this.paused) {
       return this.elapsedTimeAtPause / 1000;
-    }else{
+    } else {
       return (Date.now() - this.startTime) / 1000;
     }
   }
 
-  getElapsedTimeStr(tSec){
-    let t = tSec? tSec : this.getElapsedTime();
+  getElapsedTimeStr(tSec) {
+    let t = tSec ? tSec : this.getElapsedTime();
     let seconds = Math.floor(t);
     let minutes = Math.floor(seconds / 60);
     seconds = seconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
 }
 
 export { Timer };
 
-
 const mapRange = (value, low1, high1, low2, high2) => {
-  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
-}
+  return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1);
+};
 
 export { mapRange };

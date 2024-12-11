@@ -5,6 +5,7 @@ import {
   State,
   functionSpecIN,
   functionSpecOUT,
+  Terminal,
 } from "./logicgate_back.js";
 import logicGateDefaultTemplate from "./logicgate_template.js";
 
@@ -12,6 +13,7 @@ import "@/assets/logicgate.css";
 
 import { calculateIntersectionRatio, Throttle } from "./utils.js";
 import LZString from "./lz-string.min.js";
+import { event } from "jquery";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -68,6 +70,44 @@ const onInteract = (element, callback, options) => {
   });
 };
 
+const setUpTerminal = (terminal, lc) => {
+  terminal.domElement.addEventListener("click", (event) => {
+    event.stopPropagation();
+    lc.world.makeConnection(terminal);
+    lc.showConnectableTerminals();
+  });
+
+  terminal.domElement.draggable = true;
+  terminal.domElement.addEventListener("dragstart", (event) => {
+    event.dataTransfer.dropEffect = "link";
+    event.dataTransfer.setData("text", "terminal");
+    lc.world.clearSelection();
+    lc.world.makeConnection(terminal);
+    lc.showConnectableTerminals();
+    // event.preventDefault();
+  });
+
+  terminal.domElement.addEventListener("dragend", (event) => {
+    lc.world.clearSelection();
+    lc.showConnectableTerminals();
+  });
+
+  terminal.domElement.addEventListener("dragover", (event) => {
+    lc.mousePos = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+    event.preventDefault();
+  });
+
+  terminal.domElement.addEventListener("drop", (event) => {
+    if (event.dataTransfer.getData("text") !== "terminal") return;
+    lc.world.makeConnection(terminal);
+    lc.world.clearSelection();
+    lc.showConnectableTerminals();
+  });
+}
+
 class LogicCanvas {
   constructor(world, div, templateID, editable) {
     editable = editable === undefined ? true : editable;
@@ -97,17 +137,20 @@ class LogicCanvas {
 
     this.mousePos = { x: 0, y: 0 };
     this.onMouseMove = (event) => {
-      // console.log("mousemove", event);
       let bounds = this.domElement.getBoundingClientRect();
       this.mousePos = {
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       };
     };
+    this.onMouseLeave = (event) => {
+      this.mousePos = { x: 0, y: 0 };
+    }
     this.domElement.addEventListener("mousemove", this.onMouseMove, true);
+    this.domElement.addEventListener("mouseleave", this.onMouseLeave, true);
 
     this.canvas.addEventListener("contextmenu", (event) => {
-      console.log(JSON.stringify(this.export()));
+      console.log(this.exportAsStr());
     });
 
     // this.canvas.addEventListener("click", () => {
@@ -147,6 +190,28 @@ class LogicCanvas {
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       };
+      event.preventDefault();
+    });
+
+    this.domElement.addEventListener("drop", (e) => {
+      if (!e.dataTransfer.getData("gate")) return;
+      let gate = e.dataTransfer.getData("gate");
+      let rect = this.domElement.getBoundingClientRect();
+      let x = e.clientX - rect.left;
+      let y = e.clientY - rect.top;
+      x -= 25;
+      y -= 25;
+      switch (gate) {
+        case "IN":
+          this.createInput();
+          break;
+        case "OUT":
+          this.createOutput();
+          break;
+        default:
+          this.createGate(gate, x, y);
+          break;
+      }
     });
   }
 
@@ -176,6 +241,7 @@ class LogicCanvas {
   }
 
   updateCanvas(first) {
+    // console.log("updateCanvas");
     if (!first) {
       let xScale = this.domElement.clientWidth / this.canvas.width;
       let yScale = this.domElement.clientHeight / this.canvas.height;
@@ -334,7 +400,7 @@ class LogicCanvas {
       ctx.stroke();
     });
 
-    if (!skipMouse && this.world.previousTerminal) {
+    if (!skipMouse && this.world.previousTerminal && this.mousePos?.x) {
       // if(true && this.world.previousTerminal){
       let terminal = this.world.previousTerminal;
       let pos = calculateOffset(terminal.domElement, this.domElement);
@@ -384,8 +450,16 @@ class LogicCanvas {
   }
 
   createGateElement(template, functionSpec, x, y, draggable, removeable) {
-    x = x || 100;
-    y = y || 100;
+    x = x || 0.5;
+    y = y || 0.5;
+
+    if (x >= 0 && x <= 1) {
+      x = x * this.domElement.clientWidth;
+    }
+    if (y >= 0 && y <= 1) {
+      y = y * this.domElement.clientHeight;
+    }
+
     draggable = draggable === undefined ? true : draggable;
     removeable = removeable === undefined ? true : removeable;
     let clone = template.cloneNode(true);
@@ -409,7 +483,7 @@ class LogicCanvas {
       }, 500);
     }
 
-    if (draggable) {
+    gate._makeDraggable = () => {
       $(clone).draggable({
         handle: ".logic-gate-body",
         distance: 15,
@@ -428,7 +502,7 @@ class LogicCanvas {
             }
           }
           let gateType = gate.funcSpec.name;
-
+  
           let unknownGates = this.world.gates;
           unknownGates = unknownGates.filter(
             (g) => g._removeable && g !== gate
@@ -458,14 +532,16 @@ class LogicCanvas {
       $(clone).find(".logic-gate-body").addClass("logic-gate-body-active");
     }
 
-    if (removeable) {
-      gate.domElement.addEventListener("contextmenu", (event) => {
-        if (!gate._removeable) return;
-        this.eventManager.publish("CANVAS_GATE_REMOVED", gate);
-        event.preventDefault();
-        gate.remove();
-      });
+    if (draggable) {
+      gate._makeDraggable();
     }
+
+    gate.domElement.addEventListener("contextmenu", (event) => {
+      if (!gate._removeable) return;
+      this.eventManager.publish("CANVAS_GATE_REMOVED", gate);
+      event.preventDefault();
+      gate.remove();
+    });
 
     let inputsContainer = $(clone).find(".logic-gate-input-terminal")[0];
     let outputsContainer = $(clone).find(".logic-gate-output-terminal")[0];
@@ -490,7 +566,7 @@ class LogicCanvas {
       let div = gate.domElement;
       let label = $(div).find(".logic-gate-label")[0];
       return label.innerText;
-    }
+    };
 
     gate.inputTerminals.forEach((terminal, i) => {
       terminal.setDomElement(inputsTerminals[i]);
@@ -500,46 +576,7 @@ class LogicCanvas {
     });
 
     gate.terminals().forEach((terminal) => {
-      // onInteract(terminal.domElement, (event) => {
-      // 	event.stopPropagation();
-      // 	this.world.makeConnection(terminal);
-      // 	this.showConnectableTerminals();
-      // });
-      terminal.domElement.addEventListener("click", (event) => {
-        event.stopPropagation();
-        this.world.makeConnection(terminal);
-        this.showConnectableTerminals();
-      });
-
-      terminal.domElement.draggable = true;
-      terminal.domElement.addEventListener("dragstart", (event) => {
-        event.dataTransfer.dropEffect = "link";
-        event.dataTransfer.setData("text", "terminal");
-        this.world.clearSelection();
-        this.world.makeConnection(terminal);
-        this.showConnectableTerminals();
-        // event.preventDefault();
-      });
-
-      terminal.domElement.addEventListener("dragend", (event) => {
-        this.world.clearSelection();
-        this.showConnectableTerminals();
-      });
-
-      terminal.domElement.addEventListener("dragover", (event) => {
-        this.mousePos = {
-          x: event.clientX,
-          y: event.clientY,
-        };
-        event.preventDefault();
-      });
-
-      terminal.domElement.addEventListener("drop", (event) => {
-        if (event.dataTransfer.getData("text") !== "terminal") return;
-        this.world.makeConnection(terminal);
-        this.world.clearSelection();
-        this.showConnectableTerminals();
-      });
+      setUpTerminal(terminal, this);
     });
 
     this.eventManager.publish("CANVAS_GATE_CREATED", gate);
@@ -569,7 +606,7 @@ class LogicCanvas {
   }
 
   showConnectableTerminals() {
-    let selectedTerminal = this.world.previousTerminal;
+    let selectedTerminal = this.world?.previousTerminal;
     let selectedIsSource = selectedTerminal?.isSource;
 
     if (selectedTerminal) {
@@ -592,7 +629,7 @@ class LogicCanvas {
         );
       });
     } else {
-      this.world.terminals.forEach((terminal) => {
+      this.world?.terminals.forEach((terminal) => {
         let jqTerminal = $(terminal.domElement);
         jqTerminal.removeClass("logic-gate-terminal-connectable");
         jqTerminal.removeClass("logic-gate-terminal-removeable");
@@ -681,6 +718,7 @@ class LogicCanvas {
   }
 
   linkWorld(otherWorld, x, y) {
+    let otherCanvas = otherWorld.parent;
     let clone = this.templates["WORLD"].cloneNode(true);
     let inputsContainer = $(clone).find(".logic-gate-input-terminal")[0];
     let outputsContainer = $(clone).find(".logic-gate-output-terminal")[0];
@@ -700,7 +738,7 @@ class LogicCanvas {
       otherWorld.inputs.length,
       otherWorld.outputs.length
     );
-    let extraHeight = (maxTerminalCount - 3) * 15;
+    let extraHeight = (maxTerminalCount - 3) * 20;
     if (extraHeight > 0) {
       let currentHeight = $(clone).height();
       $(clone).height(currentHeight + extraHeight);
@@ -739,13 +777,86 @@ class LogicCanvas {
     };
     functionSpecWORLD.func = linkFunction;
 
-    gate.domElement.addEventListener("contextmenu", (event) => {
-      event.preventDefault();
-      let otherWorld = gate._linkedWorld;
-      let otherCanvas = otherWorld.parent;
-      otherCanvas.remove();
-      gate.remove();
+    // gate.domElement.addEventListener("contextmenu", (event) => {
+    //   gate.remove();
+    // });
+
+    this.eventManager.subscribe("GATE_REMOVED", (g)=>{
+      if(g === gate){
+        console.log(gate);
+        otherCanvas.remove();
+      }
+    })
+
+    let gateTerminalPair = [];
+
+    gate.inputTerminals.forEach((terminal, i) => {
+      gateTerminalPair.push([otherWorld.inputs[i], terminal]);
     });
+
+    gate.outputTerminals.forEach((terminal, i) => {
+      gateTerminalPair.push([otherWorld.outputs[i], terminal]);
+    });
+
+    otherWorld.eventManager.subscribe("GATE_REMOVED", (otherWorldRemovedGate) => {
+      let currentPair = gateTerminalPair.find((pair) => pair[0] === otherWorldRemovedGate);
+      gateTerminalPair = gateTerminalPair.filter((pair) => pair !== currentPair);
+      if(!currentPair) return;
+      let terminal = currentPair[1];
+      terminal.remove();
+    });
+
+    otherWorld.eventManager.subscribe("GATE_INPUT_ADDED", (newInputGate)=>{
+      let terminalDom = document.createElement("div");
+      terminalDom.classList.add("logic-gate-terminal");
+      let gateInputsDom = $(gate.domElement).find(".logic-gate-input-terminal")[0];
+      console.log(gateInputsDom);
+      gateInputsDom.appendChild(terminalDom);
+      let terminal = new Terminal(gate.world, gate, false);
+      terminal.setDomElement(terminalDom);
+      gate.inputTerminals.push(terminal);
+      setUpTerminal(terminal, this);
+      gateTerminalPair.push([newInputGate, terminal]);
+    });
+
+    otherWorld.eventManager.subscribe("GATE_OUTPUT_ADDED", (newOutputGate)=>{
+      let terminalDom = document.createElement("div");
+      terminalDom.classList.add("logic-gate-terminal");
+      let gateOutputsDom = $(gate.domElement).find(".logic-gate-output-terminal")[0];
+      console.log(gateOutputsDom);
+      gateOutputsDom.appendChild(terminalDom);
+      let terminal = new Terminal(gate.world, gate, true);
+      terminal.setDomElement(terminalDom);
+      gate.outputTerminals.push(terminal);
+      setUpTerminal(terminal, this);
+      gateTerminalPair.push([newOutputGate, terminal]);
+    });
+
+    otherWorld.eventManager.subscribe("WORLD_TERMINAL_SELECTED", (otherTerminal) => {
+      this.world.clearSelection();
+      this.showConnectableTerminals();
+      if(!otherTerminal) return; 
+      let otherGate = otherTerminal.parent;
+      let pair = gateTerminalPair.find((pair) => pair[0] === otherGate);
+      if (!pair) return;
+      let terminal = pair[1];
+      this.world.previousTerminal = terminal;
+      this.showConnectableTerminals();
+    })
+
+    this.eventManager.subscribe("WORLD_TERMINAL_SELECTED", (terminal) => {
+      otherWorld.clearSelection();
+      otherCanvas.showConnectableTerminals();
+      if(!terminal) return;
+      let pair = gateTerminalPair.find((pair) => pair[1] === terminal);
+      if (!pair) return;
+      let otherGate = pair[0];
+      otherWorld.previousTerminal = otherGate.terminals()[0];
+      otherCanvas.showConnectableTerminals();
+    });
+
+    this.eventManager.publish("CANVAS_WORLD_LINKED", gate);
+    otherWorld.eventManager.setUpstreamEventManager(this.eventManager);
 
     inputsContainer = null;
     outputsContainer = null;
@@ -778,7 +889,10 @@ class LogicCanvas {
   }
 
   stopVisualTick() {
-    this.slowVisualTick = setInterval(() => {}, 100);
+    clearInterval(this.slowVisualTick);
+    this.slowVisualTick = setInterval(() => {
+      this.visualTick();
+    }, 100);
     this.visualTickRunning = false;
   }
 
@@ -807,7 +921,7 @@ class LogicCanvas {
       XOR: "logic-xor-template",
       XNOR: "logic-xnor-template",
       UNKNOWN: "logic-unknown-template",
-	  UNKNOWN1: "logic-unknown1-template",
+      UNKNOWN1: "logic-unknown1-template",
       IN: "logic-in-template",
       OUT: "logic-out-template",
       WORLD: "logic-world-template",
@@ -827,16 +941,9 @@ class LogicCanvas {
   createGate(fundamentalGateType, x, y, draggable, removeable) {
     this.world.clearSelection();
     this.showConnectableTerminals();
-
-    if (x >= 0 && x <= 1) {
-      x = x * this.domElement.clientWidth;
-    }
-    if (y >= 0 && y <= 1) {
-      y = y * this.domElement.clientHeight;
-    }
-
     if (x === undefined) x = this.domElement.clientWidth / 2 - 25;
     if (y === undefined) y = this.domElement.clientHeight / 2 - 25;
+
     if (FundamentalGate[fundamentalGateType] === undefined) {
       console.error("Invalid fundamental gate type");
       return;
@@ -877,7 +984,7 @@ class LogicCanvas {
     return await this.world.evaluate(inputs);
   }
 
-  export() {
+  export(compressed) {
     let worldData = this.world.export();
 
     let gateExport = [];
@@ -936,17 +1043,22 @@ class LogicCanvas {
         height: this.domElement.clientHeight,
       },
     };
-    // console.log(data);
+
+    if(compressed){
+      return LZString.compressToBase64(JSON.stringify(data));
+    }
+
     return data;
   }
 
-  load(data) {
+  _load(data, otherWorldDivContainer) {
     // this.domElement.style.width = data.canvasSize.width + "px";
     // this.domElement.style.height = data.canvasSize.height + "px";
     this.updateCanvas();
 
     let xScale = this.domElement.clientWidth / data.canvasSize.width;
     let yScale = this.domElement.clientHeight / data.canvasSize.height;
+    console.log(xScale, yScale);
 
     this.clear();
     let gates = {};
@@ -956,12 +1068,12 @@ class LogicCanvas {
         let div = document.createElement("div");
         div.style.width = gateData.canvasSize.width + "px";
         div.style.height = gateData.canvasSize.height + "px";
-        document.body.appendChild(div);
-        // div.style.display = "none";
+        otherWorldDivContainer && otherWorldDivContainer.appendChild(div);
         let canvas = new LogicCanvas(world, div);
-        canvas.load(gateData.worldExport);
-        let x = parseInt(gateData.x);
-        let y = parseInt(gateData.y);
+        canvas.eventManager.setUpstreamEventManager(this.eventManager);
+        canvas.load(gateData.worldExport, otherWorldDivContainer);
+        let x = parseInt(gateData.x) * xScale;
+        let y = parseInt(gateData.y) * yScale;
         let gate = this.linkWorld(world, x, y);
         gates[gateData.id] = gate;
         gates[gateData.id].setState(gateData.state);
@@ -1000,9 +1112,26 @@ class LogicCanvas {
     return LZString.compressToBase64(JSON.stringify(this.export()));
   }
 
-  loadFromStr(str) {
-	let data = JSON.parse(LZString.decompressFromBase64(str));
-	this.load(data);
+  load(str, otherWorldDivContainer) {
+    let data = str;
+    if (typeof str === "string") {
+      try {
+        data = JSON.parse(str);
+        console.log("Data is string");
+      } catch (e) {
+        data = JSON.parse(LZString.decompressFromBase64(str));
+        console.log("Data is compressed string");
+      }
+    }else{
+      console.log("Data is object");
+    }
+    try{
+      this._load(data, otherWorldDivContainer);
+    }catch(e){
+      console.error("Error loading data", e);
+      console.error("Data", data);
+      this.clear();
+    }
   }
 
   clone() {
@@ -1014,12 +1143,6 @@ class LogicCanvas {
   }
 
   clear(keepIO) {
-    this.world.gates.forEach((gate) => {
-      if (gate.funcSpec.name === "WORLD") {
-        gate._linkedWorld.parent.remove();
-      }
-    });
-
     if (keepIO) {
       this.world.gates.forEach((gate) => {
         let isInput = this.world.inputs.includes(gate);
@@ -1039,29 +1162,29 @@ class LogicCanvas {
   remove() {
     this.clear();
     window.removeEventListener("resize", this.onResize);
-    clearInterval(this.slowVisualTick);
     this.stopVisualTick();
     this.stopWorldTick();
+    this.visualTickRunning = false;
+    clearInterval(this.slowVisualTick);
     this.domElement.remove();
-    this.domElement = null;
     this.world.remove();
-    this.world = null;
+    this.eventManager.publish("CANVAS_REMOVED", this);
   }
 
-  importAsGate(data, x, y) {
+  importAsGate(data, x, y, otherWorldDivContainer) {
     if (data instanceof LogicCanvas) {
       data = data.export();
     }
     let newDiv = document.createElement("div");
-    newDiv.style.width = `${data.canvasSize.width}px`;
-    newDiv.style.height = `${data.canvasSize.height}px`;
-    document.body.appendChild(newDiv);
+    newDiv.style.width = "100px";
+    newDiv.style.height = "100px";
+    otherWorldDivContainer && otherWorldDivContainer.appendChild(newDiv);
     let newWorld = new World();
     let newCanvas = new LogicCanvas(newWorld, newDiv);
-    newCanvas.load(data);
-
-    x = x || 100;
-    y = y || 100;
+    newCanvas.eventManager.setUpstreamEventManager(this.eventManager);
+    newCanvas.load(data, otherWorldDivContainer);
+    x = x || 0.5;
+    y = y || 0.5;
     let gate = this.linkWorld(newCanvas.world, x, y);
 
     return gate;
