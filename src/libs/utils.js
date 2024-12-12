@@ -101,12 +101,9 @@ const setupLifecycleNotifier = (eventManager, data) => {
 
 export { setupLifecycleNotifier };
 
+let viewport = document.querySelector('meta[name="viewport"]');
+let deviceWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
 function zoomOutDevice() {
-  var viewport = document.querySelector('meta[name="viewport"]');
-
-  var deviceWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
-  console.log(deviceWidth);
-
   if (deviceWidth <= 500) {
     viewport.content = "initial-scale=0.1";
     viewport.content = "width=500";
