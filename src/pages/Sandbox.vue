@@ -250,6 +250,7 @@ const contextMenu = {
 </script>
 
 <template>
+    <div class="wip-text">WIP</div>
     <button @click="debugExport" style="opacity: 0.1;"
         class="position-fixed bottom-0 start-50 m-3 translate-middle-x z-3">Export Canvas</button>
     <div class="app-container">
@@ -447,5 +448,18 @@ const contextMenu = {
     padding: 0;
     gap: 2em;
     font-weight: normal;
+}
+
+.wip-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-20deg);
+    font-size: 30vw;
+    font-weight: bolder;
+    opacity: 0.1;
+    color: #ccc;
+    z-index: 1000000;
+    pointer-events: none;
 }
 </style>
