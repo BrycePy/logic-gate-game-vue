@@ -405,7 +405,7 @@ const debugExport = () => {
                 </div>
 
                 <div class="challenge-container">
-                    <h2>Chellenge:</h2>
+                    <h2>Challenge:</h2>
                     <div id="challenge" ref="test"></div>
                     <!-- <div class="testdummy"></div> -->
                 </div>

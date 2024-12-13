@@ -36,6 +36,8 @@ class TruthTableLevel extends LevelBase {
     constructor(data) {
         super(data);
         this.truthTableFn = data.truthTable;
+        this.context = data.context;
+        this.hideTruthTable = data.hideTruthTable;
         this.truthTable;
 
         if(typeof this.truthTableFn !== 'function'){

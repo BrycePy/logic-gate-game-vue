@@ -95,10 +95,10 @@ defineExpose({
 </script>
 
 <template>
-    <p>{{ ttLevelData.description }}</p>
+    <p>{{ ttLevelData.context }}</p>
     <!-- <data.template v-if="data.template" /> -->
     <ttLevelData v-if="ttLevelData.render" ref="levelVue"></ttLevelData>
-    <div class="test-case-table-container">
+    <div class="test-case-table-container" :class="ttLevelData.hideTruthTable?'tt-hide':''">
         <table class="table table-dark table-hover text-center table-striped table-test-case">
             <thead>
                 <tr>
@@ -117,6 +117,9 @@ defineExpose({
 </template>
 
 <style scoped>
+.tt-hide {
+    display: none;
+}
 
 .table-test-case{
     margin: 0;

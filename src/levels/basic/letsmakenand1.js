@@ -3,6 +3,8 @@ import { TruthTableLevel } from "../levelbase";
 const andLevel = new TruthTableLevel({
     name: "NAND 1",
     description: "Create a NAND gate using AND and NOT gates",
+    context: "Test Context",
+    hideTruthTable: true,
     inputs: [
         "A",
         "B"

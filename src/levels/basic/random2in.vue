@@ -5,6 +5,7 @@ import { getCallerArgs } from "@/libs/utils";
 const random2IN = new TruthTableLevel({
     name: "Random 2 inputs",
     description: "",
+    context: "Random 2 inputs",
     inputs: [
         "A",
         "B"
