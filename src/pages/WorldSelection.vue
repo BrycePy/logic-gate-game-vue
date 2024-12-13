@@ -8,7 +8,7 @@ import MainMenu from '../pages/MainMenu.vue';
 import Play from '../pages/Play.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
-import { hintCursor } from '@/main';
+import { hintCursor, setTitle } from '@/main';
 import userData from '@/UserData';
 
 const callerData = getCallerArgs();
@@ -23,6 +23,7 @@ onMounted(() => {
     let urlUpToHash = window.location.href.split('#')[0];
     let newUrl = urlUpToHash + '#world-selection';
     window.history.pushState({}, '', newUrl);
+    setTitle('World Selection');
 
     hintCursor.clear();
     if(!userData.getAttempt('Basic.Tutorial', 'stars')){
@@ -230,7 +231,6 @@ const handlePlay = (level) => {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    /* align-items: left; */
     justify-content: center;
     margin: 1em;
     padding: 1em;

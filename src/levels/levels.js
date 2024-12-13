@@ -6,17 +6,34 @@ import SmartHome1 from "./smarthome/smarthome1.vue";
 import SmartHome2 from "./smarthome/smarthome2.vue";
 import SmartHome3 from "./smarthome/smarthome3.vue";
 import SmartHome4 from "./smarthome/smarthome4.vue";
-import random2in from "./basic/random2in.vue";
-import random3in from "./basic/random3in.vue";
+
+import SmartHome1NAND from "./smarthomenand/smarthome1.vue";
+import SmartHome2NAND from "./smarthomenand/smarthome2.vue";
+import SmartHome3NAND from "./smarthomenand/smarthome3.vue";
+import SmartHome4NAND from "./smarthomenand/smarthome4.vue";
+
+import random2in from "./others/random2in.vue";
+import random3in from "./others/random3in.vue";
+import fullAdderLevel from "./others/fulladder.vue";
+import latchLevel from "./others/latch.vue";
+import Sandbox from "@/pages/Sandbox.vue";
 
 console.log("vue",nothingLevel);
 
 // name: 'Tutorial',
 // description: 'Learn the basics of logic gates and game mechanics',
 
+const makeNANDOnly = (level) => {
+    let newLevel = structuredClone(level);
+    newLevel.availableGates = ["NAND"];
+    newLevel.name = level.name + " (NAND ONLY)";
+    return newLevel;
+}
+
 const worlds = [
     {name: "Basic", description: "Basic level", levels: [
         {name: "Tutorial", description: "Learn the basics of logic gates and game mechanics", goToPage: Tutorial},
+        {name: "Sandbox", description: "Experiment with the circuit however you like", goToPage: Sandbox},
         nothingLevel,
         andLevel,
     ]},
@@ -27,17 +44,18 @@ const worlds = [
         SmartHome3,
         SmartHome4
     ]},
-    {name: "Intermediate", description: "Intermediate level", levels: [
+    {name: "Smart Home (NAND ONLY)", description: "smarthome level (NAND ONLY)", levels: [
+        SmartHome1NAND,
+        SmartHome2NAND,
+        SmartHome3NAND,
+        SmartHome4NAND
+    ]},
+    {name: "Others", description: "Others level", levels: [
+        fullAdderLevel,
+        latchLevel,
         random2in,
         random3in,
-    ]},
-    {name: "Others", description: "Advanced level", levels: [
-        {name: "Level 4", description: "Level 4Level 1Level 1Level 1Level 1Level 1Level 1"},
-        {name: "Level 5", description: "Level 5Level 2Level 2Level 2Level 2Level 2Level 2"},
-        {name: "Level 6", description: "Level 6Level 3Level 3Level 3Level 3Level 3Level 3"},
-        {name: "Level 6", description: "Level 6Level 3Level 3Level 3Level 3Level 3Level 3"},
-        {name: "Level 6", description: "Level 6Level 3Level 3Level 3Level 3Level 3Level 3"},
-    ]},
+    ]}
 ]
 
 const idToLevel = {};

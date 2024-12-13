@@ -6,7 +6,7 @@ import WorldSelection from './WorldSelection.vue';
 import { onBrowserBack } from '@/libs/utils';
 import { LogicCanvas } from '@/libs/logicgate_front';
 import { World } from '@/libs/logicgate_back';
-import { hintCursor } from '@/main';
+import { hintCursor, setTitle } from '@/main';
 import { FundamentalGate } from '@/libs/logicgate_back';
 import { populateGateDeck } from './Play.vue';
 import userData from '@/UserData';
@@ -26,7 +26,6 @@ Object.keys(idToLevel).forEach(id => {
         level = current;
     }
 });
-console.log('level', level)
 
 onBrowserBack(handleBack)
 
@@ -39,6 +38,7 @@ onMounted(async () => {
     let urlUpToHash = window.location.href.split('#')[0];
     let newUrl = urlUpToHash + `#tutorial`;
     window.history.pushState({}, '', newUrl);
+    setTitle('Tutorial');
 
     let gateTypes = ['AND', 'OR', 'XOR', 'NOT', 'NAND', 'NOR', 'XNOR'];
     for (let gateType of gateTypes) {

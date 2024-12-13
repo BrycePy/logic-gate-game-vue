@@ -1,7 +1,7 @@
 <script>
-const populateGateDeck = (logicCanvas, gates) => {
+const populateGateDeck = (logicCanvas, gates, className) => {
     // gates = [...gates, 'UNKNOWN', 'UNKNOWN1']
-    let gateDeck = document.querySelector('.logic-gate-deck');
+    let gateDeck = document.querySelector(`.${className || 'logic-gate-deck'}`);
     gates.forEach(gate => {
         let gateDiv = logicCanvas.getGateTemplate(gate);
         let clone = gateDiv.cloneNode(true);
@@ -47,21 +47,6 @@ const populateGateDeck = (logicCanvas, gates) => {
             e.dataTransfer.setData('gate', gate);
         }
     });
-
-    logicCanvas.domElement.ondragover = (e) => {
-        e.preventDefault();
-    }
-
-    logicCanvas.domElement.ondrop = (e) => {
-        if (!e.dataTransfer.getData('gate')) return;
-        let gate = e.dataTransfer.getData('gate');
-        let rect = logicCanvas.domElement.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-        x -= 25;
-        y -= 25;
-        logicCanvas.createGate(gate, x, y);
-    }
 }
 export { populateGateDeck };
 </script>
@@ -75,7 +60,7 @@ import { onBrowserBack } from '@/libs/utils';
 import { idToLevel } from '@/levels/levels';
 import { LogicCanvas } from '@/libs/logicgate_front';
 import { World } from '@/libs/logicgate_back';
-import { hintCursor } from '@/main';
+import { hintCursor, setTitle } from '@/main';
 import { sleep } from '../libs/utils';
 import { useTemplateRef } from 'vue';
 
@@ -122,6 +107,16 @@ let resultModalData = ref([
     { star: false, text: '# of Gates' },
 ])
 
+const setIOLabels = () => {
+    let world = logicCanvas?.world;
+    level.inputs?.forEach((input, i) => {
+        world?.inputs[i].setLabel(input);
+    });
+    level.outputs?.forEach((output, i) => {
+        world?.outputs[i].setLabel(output);
+    });
+}
+
 const paintTimer = () => {
     let userTimeStr = timer.getElapsedTimeStr();
     let timeLimitStr = level.timeLimit ? timer.getElapsedTimeStr(level.timeLimit) : '∞';
@@ -151,6 +146,8 @@ onMounted(async () => {
     let urlUpToHash = window.location.href.split('#')[0];
     let newUrl = urlUpToHash + `#play?${level.id}`;
     window.history.pushState({}, '', newUrl);
+
+    setTitle(`Play (${level.name})`);
 
     if (!level.hideCanvas) {
         let targetDiv = document.querySelector('.logic-canvas-here');
@@ -223,23 +220,71 @@ onMounted(async () => {
         if (savedOutputCount != currentOutputCount) return;
         setTimeout(() => {
             logicCanvas.load(userAttemptCanvas);
-            level.inputs?.forEach((input, i) => {
-                logicCanvas.world.inputs[i].setLabel(input);
-            });
-            level.outputs?.forEach((output, i) => {
-                logicCanvas.world.outputs[i].setLabel(output);
-            });
+            setIOLabels();
             timer.set(userAttemptTime);
             timer.pause();
             continueTimerOnUpdate();
         }, 500)
     }
-
     await sleep(500);
     $("html, body").animate({
         scrollTop: $("#challenge").offset().top - 350
     }, 100);
+
+    oracleHandler.showHelpIconIfOracle();
+
 })
+
+const oracleHandler = {
+    currentIndex: 0,
+    showHelpIconIfOracle: ()=>{
+        hintCursor.setCanvas(logicCanvas);
+        let helpIcon = document.querySelector('.canvas-help-icon');
+        if(level.oracles){
+            helpIcon.style.opacity = 1;
+            oracleHandler.updateTooltip();
+        }
+    },
+    updateTooltip: ()=>{
+        let text = document.querySelector('.help-tooltip-text');
+        let prevBtn = document.querySelector('.help-tooltip-back-btn');
+        let showMeBtn = document.querySelector('.help-tooltip-showme-btn');
+        let nextBtn = document.querySelector('.help-tooltip-next-btn');
+
+        text.innerText = level.oracles[oracleHandler.currentIndex].text;
+
+        let showPrev = Boolean(level.oracles[oracleHandler.currentIndex - 1]);
+        let showNext = Boolean(level.oracles[oracleHandler.currentIndex + 1]);
+        let showShow = Boolean(level.oracles[oracleHandler.currentIndex].action);
+        prevBtn.style.opacity = showPrev ? 1 : 0.1;
+        prevBtn.disabled = !showPrev;
+        nextBtn.style.opacity = showNext ? 1 : 0.1;
+        nextBtn.disabled = !showNext;
+        showMeBtn.style.opacity = showShow ? 1 : 0.1;
+        showMeBtn.disabled = !showShow;
+    },
+    back: ()=>{
+        oracleHandler.currentIndex--;
+        oracleHandler.updateTooltip();
+    },
+    next: ()=>{
+        oracleHandler.currentIndex++;
+        oracleHandler.updateTooltip();
+    },
+    showMe: ()=>{
+        let currentOracle = level.oracles[oracleHandler.currentIndex];
+        if(currentOracle.previousState){
+            logicCanvas.clear();
+            logicCanvas.load(currentOracle.previousState);
+            setIOLabels();
+        }
+
+        currentOracle.action(logicCanvas);
+        let showMeBtn = document.querySelector('.help-tooltip-showme-btn');
+        showMeBtn.style.opacity = 0.1;
+        showMeBtn.disabled = true;
+    }
+}
 
 onBeforeUnmount(() => {
     $("#reviewPopup").modal('hide');
@@ -379,18 +424,32 @@ const debugExport = () => {
                     <div class="logic-canvas-scale">
                         <div class="logic-canvas-here">
                             <div class="level-timer"></div>
-                            <img src="@/assets/info-circle.svg"
-                                class="canvas-info-icon position-absolute top-0 end-0 m-3 z-3" alt="info" />
-                            <div class="canvas-info-tooltip position-absolute top-50 start-50 translate-middle">
-                                <p><b>Adding a Gate:</b> Click or tap on a gate in the gate deck to add it to the
-                                    canvas. Alternatively, drag the gate from the deck onto the canvas.</p>
-                                <div class="logic-canvas-and-demo"></div>
-                                <p><b>Removing a Gate:</b> Right-click on the gate or drag it outside the canvas to
-                                    remove it.</p>
-                                <p><b>Moving a Gate:</b> Drag the gate to reposition it on the canvas.</p>
-                                <p><b>Adding or Removing a Wire:</b> Click or tap on a terminal of one gate, then on the
-                                    terminal of another gate. You can also drag one terminal to another to connect or
-                                    disconnect them.</p>
+                            <div class="container w-100 h-100 m-0 p-0 position-absolute">                                
+                                <img src="@/assets/info-circle.svg"
+                                    class="canvas-info-icon position-absolute top-0 end-0 m-3 z-3" alt="info" />
+                                <div class="canvas-info-tooltip position-absolute top-50 start-50 translate-middle">
+                                    <p><b>Adding a Gate:</b> Click or tap on a gate in the gate deck to add it to the
+                                        canvas. Alternatively, drag the gate from the deck onto the canvas.</p>
+                                    <div class="logic-canvas-and-demo"></div>
+                                    <p><b>Removing a Gate:</b> Right-click on the gate or drag it outside the canvas to
+                                        remove it.</p>
+                                    <p><b>Moving a Gate:</b> Drag the gate to reposition it on the canvas.</p>
+                                    <p><b>Adding or Removing a Wire:</b> Click or tap on a terminal of one gate, then on the
+                                        terminal of another gate. You can also drag one terminal to another to connect or
+                                        disconnect them.</p>
+                                </div>
+                            </div>
+                            <div class="w-100 h-100 m-0 p-0 position-absolute">
+                                <img src="@/assets/patch-question.svg"
+                                class="canvas-help-icon position-absolute bottom-0 start-0 m-3 z-3" alt="info" />
+                                <div class="canvas-help-tooltip position-absolute bottom-0 start-50 translate-middle-x mb-3">
+                                    <p class="help-tooltip-text">test</p>
+                                    <div class="d-flex justify-content-between">
+                                        <button class="btn btn-secondary help-tooltip-back-btn" @click="oracleHandler.back"><</button>
+                                        <button class="btn btn-secondary help-tooltip-showme-btn" @click="oracleHandler.showMe">Show Me How</button>
+                                        <button class="btn btn-secondary help-tooltip-next-btn" @click="oracleHandler.next">></button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -467,6 +526,65 @@ const debugExport = () => {
     cursor: pointer;
 }
 
+.canvas-info-tooltip {
+    width: 90%;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 0.5em;
+    border: 1px solid #888;
+    padding: 0.5em;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s;
+    z-index: 3000;
+}
+
+.canvas-info-icon:hover+.canvas-info-tooltip, .canvas-info-tooltip:hover {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+
+@keyframes jiggle {
+    0%, 70%, 80%, 90%, 100% {
+        transform: rotate(0deg);
+    }
+    72%, 78%, 82%, 88% {
+        transform: rotate(-5deg);
+    }
+    75%, 85%, 95% {
+        transform: rotate(5deg);
+    }
+}
+
+.canvas-help-icon {
+    width: 2em;
+    height: 2em;
+    cursor: pointer;
+    animation: jiggle 3s infinite;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.canvas-help-tooltip {
+    width: 90%;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 0.5em;
+    border: 1px solid #888;
+    padding: 0.5em;
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 3000;
+    pointer-events: none;
+}
+
+.canvas-help-icon:hover+.canvas-help-tooltip, .canvas-help-tooltip:hover {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .result-star {
     width: 3em;
     height: 3em;
@@ -484,23 +602,6 @@ const debugExport = () => {
 
 .result-star-fill {
     animation: stamp 1s;
-}
-
-.canvas-info-tooltip {
-    width: 90%;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    border-radius: 0.5em;
-    border: 1px solid #888;
-    padding: 0.5em;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s;
-    z-index: 3000;
-}
-
-.canvas-info-icon:hover+.canvas-info-tooltip {
-    opacity: 1;
 }
 
 .testdummy {
@@ -624,7 +725,8 @@ const debugExport = () => {
 </style>
 
 <style scoped>
-@media screen and (max-width: 500px) {
+/* @media screen and (max-width: 500px) { */
+@media screen and (max-width: 1400px) {
     .app-container {
         margin-bottom: 10em;
     }

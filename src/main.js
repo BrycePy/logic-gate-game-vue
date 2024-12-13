@@ -12,6 +12,7 @@ import "@/libs/jquery.ui.touch-punch.min.js";
 import "drag-drop-touch";
 import userData from "./UserData";
 import "@/libs/lz-string.min.js";
+import Sandbox from "./pages/Sandbox.vue";
 
 const mainEventManager = new EventManager();
 export { mainEventManager as eventManager };
@@ -21,6 +22,14 @@ const hintCursor = new LogicCanvasHint(undefined);
 export { hintCursor };
 
 console.log(location);
+
+const appName = "Logigate";
+document.title = appName;
+
+const setTitle = (title) => {
+  document.title = title? `${appName} - ${title}` : appName;
+};
+export { setTitle };
 
 const leakBuffer = [];
 const dummyLeak = () => {
@@ -54,7 +63,9 @@ if (hash.startsWith("#play")) {
   mountApp(WorldSelection);
 } else if (hash.startsWith("#tutorial")) {
   mountApp(Tutorial);
-}else if (hash.startsWith("#mem-leak-test")) {
+} else if (hash.startsWith("#sandbox")) {
+  mountApp(Sandbox);
+} else if (hash.startsWith("#mem-leak-test")) {
   testMemleak();
 } else {
   mountApp(MainMenu);
@@ -90,6 +101,19 @@ clearUserDataBtn.addEventListener("click", () => {
   userData.clear();
 });
 document.body.appendChild(clearUserDataBtn);
+
+
+let deviceWidth = (window.innerWidth > 0) ? window.innerWidth : screen.width;
+let deviceHeight = (window.innerHeight > 0) ? window.innerHeight : screen.height;
+let newText = document.createElement("div");
+newText.innerHTML = `Device: ${deviceWidth} x ${deviceHeight}`;
+newText.style.position = "fixed";
+newText.style.top = "10px";
+newText.style.left = "10px";
+newText.style.zIndex = "100";
+newText.style.opacity = "0.3";
+document.body.appendChild(newText);
+
 
 // window.addEventListener("dblclick", () => {
 //   let newStyle = document.createElement("style");
