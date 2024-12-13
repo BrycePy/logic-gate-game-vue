@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import { onMounted } from 'vue';
 import { mountApp, getCallerArgs } from '../libs/utils';
 import WorldSelection from '../pages/WorldSelection.vue';
-import { hintCursor } from '@/main';
+import { hintCursor, setTitle } from '@/main';
 
 
 onMounted(() => {
@@ -11,6 +11,7 @@ onMounted(() => {
     let urlUpToHash = window.location.href.split('#')[0];
     let newUrl = urlUpToHash + '#main-menu';
     window.history.pushState({}, '', newUrl);
+    setTitle();
 
     const startBtn = $('.start-btn')[0];
     hintCursor.clear();

@@ -9,6 +9,7 @@ class LevelBase {
         this.timeLimit = data.timeLimit;
         this.onCreated = data.onCreated;
         this.onSubmit = data.onSubmit;
+        this.oracles = data.oracles;
 
         this.initialCanvas = data.initialState;
         this.knownSolution = data.knownSolution;
@@ -48,6 +49,11 @@ class TruthTableLevel extends LevelBase {
 
     calculateTruthTable() {
         this.truthTable = this.truthTableFn();
+        this.truthTable = this.truthTable.map(row=>{
+            let inputs = row.inputs.map(input=>input?1:0);
+            let outputs = row.outputs.map(output=>output?1:0);
+            return {inputs, outputs};
+        })
     }
 }
 export { TruthTableLevel };

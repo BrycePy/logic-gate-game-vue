@@ -13,7 +13,6 @@ const ttLevelData = inject('truthTableLevelData');
 
 const inputs = ttLevelData.inputs;
 const outputs = ttLevelData.outputs;
-const tableHeader = [...inputs, ...outputs]
 const actualOutputs = ref(ttLevelData.truthTable.map(testCase => [...testCase.outputs]));
 const rttLevelData = reactive(ttLevelData);
 const instance = getCurrentInstance();
@@ -43,11 +42,14 @@ const run = async (testCaseIndex) => {
     let allMatch = true;
     result.forEach((actual, index) => {
         let expected = outputs[index];
+        let cellElement = rowElement.find('td').eq(index + inputs.length);
         if(actual == expected){
             actualOutputs.value[testCaseIndex][index] = expected;
+            cellElement.addClass('table-success');
         } else {
             actualOutputs.value[testCaseIndex][index] = `${expected} (got: ${actual})`;
             allMatch = false;
+            cellElement.addClass('table-danger');
         }
     });
 
@@ -79,6 +81,8 @@ const resetTableColor = () => {
     $(".table-test-case").find('tr').removeClass('table-primary');
     $(".table-test-case").find('tr').removeClass('table-success');
     $(".table-test-case").find('tr').removeClass('table-danger');
+    $(".table-test-case").find('td').removeClass('table-success');
+    $(".table-test-case").find('td').removeClass('table-danger');
 }
 
 const handleTestClick = async (testCaseIndex, e) => {
@@ -102,7 +106,8 @@ defineExpose({
         <table class="table table-dark table-hover text-center table-striped table-test-case">
             <thead>
                 <tr>
-                    <th class="col-1" v-for="name in tableHeader">{{ name }}</th>
+                    <th class="col-1 table-header-inputs" v-for="name in inputs">{{ name }}</th>
+                    <th class="col-2 table-header-outputs" v-for="name in outputs">{{ name }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -125,10 +130,26 @@ defineExpose({
 .test-case-table-container {
     margin-left: auto;
     margin-right: auto;
-    width: 80%;
+    /* width: 80%; */
+    width: 100%;
     border-radius: 1em;
     padding: 0;
     overflow: hidden;
+    /* transition: width 0.5s; */
+}
+
+td {
+    text-wrap: nowrap;
+}
+
+.table-header-inputs {
+    background-color: #1a2433;
+    color: white;
+}
+
+.table-header-outputs {
+    background-color: #1a2c33;
+    color: white;
 }
 
 :global(.table-test-case-row td) {

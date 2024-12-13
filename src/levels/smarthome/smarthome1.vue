@@ -1,5 +1,4 @@
 <script>
-import { setCallerArgs, getCallerArgs, mapRange } from '@/libs/utils';
 import { inject, onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
 import smarthomevitual from '@/components/smarthomevitual.vue';
 
